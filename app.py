@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 import re
+import plotly.express as px
 
 img = Image.open('inegi.png')
 
@@ -11,7 +12,7 @@ st.title('Análisis Interactivo Censos Económicos')
 
 # --- CARGA Y PROCESAMIENTO DE DATOS PRINCIPALES ---
 @st.cache_data
-def cargar_y_limpiar_datos():
+def cargar_datos():
     """Carga y unifica todos los archivos CSV de censos con su censo correspondiente."""
     
     # Mapeo de archivos a años de censo
@@ -80,7 +81,7 @@ def cargar_y_limpiar_datos():
     return df_unificado
 
 # Cargar datos al inicio
-df = cargar_y_limpiar_datos()
+df = cargar_datos()
 
 if df.empty:
     st.stop()
@@ -102,7 +103,7 @@ with col1:
 with col2:
     sector = st.selectbox(
         'Selecciona el Sector',
-        ['TODOS LOS SECTORES','MANUFACTURAS','COMERCIO','SERVICIOS PRIVADOS NO FINANCIEROS','OTROS SECTORES']
+        ['TODOS LOS SECTORES','COMERCIO','MANUFACTURAS','OTROS SECTORES','SERVICIOS PRIVADOS NO FINANCIEROS']
     )
 
 with col3:
@@ -1272,8 +1273,9 @@ else:
     
     st.dataframe(tabla_pivote_formato, use_container_width=True)
     
+  
     # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DE UNIDADES ECONÓMICAS ---
-    st.subheader("Crecimiento de Unidades Económicas")
+    #st.subheader("Crecimiento de Unidades Económicas")
 
    # Obtener la fila de totales numéricos de la tabla original
     totales_numericos = tabla_pivote.loc['TOTAL']
@@ -1317,10 +1319,10 @@ else:
     )
     
     # Formatear la tabla de crecimiento a 4 decimales
-    df_crecimiento = df_crecimiento.apply(lambda x: pd.to_numeric(x, errors='coerce').round(4))
+    df_crecimiento = df_crecimiento.apply(lambda x: pd.to_numeric(x, errors='coerce').round(14))
     
     # Mostrar la nueva tabla
-    st.dataframe(df_crecimiento, use_container_width=True)
+    #st.dataframe(df_crecimiento, use_container_width=True)
 
 
 
@@ -1333,7 +1335,7 @@ else:
     censos_str = totales_numericos.index.tolist()
     
     # DataFrame para los resultados de la proyección
-    df_proyeccion = pd.DataFrame(columns=['Año', 'UE Proyectadas'])
+    df_proyeccion = pd.DataFrame(columns=['Año', 'Número de Negocios'])
 
     # Iterar sobre los periodos censales para la proyección
     for i in range(len(censos_str) - 1):
@@ -1373,12 +1375,11 @@ else:
     df_proyeccion.loc[len(df_proyeccion)] = [2018, valor_ultimo_censo]
     df_proyeccion.loc[len(df_proyeccion)] = [2019, valor_ultimo_censo]
     
+    
     # --- Cálculo y adición de la proyección para 2019 ---
-    st.markdown("---")
-    #st.subheader("Proyección del año 2019")
-
+    
     # Obtener el valor de 2018 de la tabla de proyecciones
-    valor_2018 = df_proyeccion.loc[df_proyeccion['Año'] == 2018, 'UE Proyectadas'].iloc[0]
+    valor_2018 = df_proyeccion.loc[df_proyeccion['Año'] == 2018, 'Número de Negocios'].iloc[0]
     
     # Calcular las tasas de crecimiento quinquenal
     tasas_quinquenales = []
@@ -1396,14 +1397,14 @@ else:
     # Calcular el promedio de las tasas quinquenales y elevarlo a 1/5
     if tasas_quinquenales:
         promedio_quinquenal = sum(tasas_quinquenales) / len(tasas_quinquenales)
-        tasa_anual_promedio = promedio_quinquenal**(1/5)
+        tasa_anual_promedio = promedio_quinquenal**(1/(6-1))
     else:
         tasa_anual_promedio = 1 # Valor por defecto si no hay tasas
 
-    #st.write(f"Tasa anual de crecimiento promedio calculada: {tasa_anual_promedio:.4f}")
+#    st.write(f"Tasa anual de crecimiento promedio calculada: {tasa_anual_promedio:.4f}")
 
     # Obtener el valor de 2018 de la tabla de proyecciones
-    valor_2018 = df_proyeccion.loc[df_proyeccion['Año'] == 2018, 'UE Proyectadas'].iloc[0]
+    valor_2018 = df_proyeccion.loc[df_proyeccion['Año'] == 2018, 'Número de Negocios'].iloc[0]
     
     # Calcular el valor proyectado para 2019
     valor_2019_proyectado = valor_2018 * tasa_anual_promedio
@@ -1411,11 +1412,169 @@ else:
     # Añadir la fila de 2019 a la tabla
     df_proyeccion.loc[len(df_proyeccion)] = [2019, valor_2019_proyectado]
 
-    # Limpiar y formatear el DataFrame de proyecciones
+  # Limpiar y formatear el DataFrame de proyecciones
     df_proyeccion.sort_values(by='Año', inplace=True)
     df_proyeccion.drop_duplicates(subset='Año', keep='last', inplace=True)
     df_proyeccion['Año'] = df_proyeccion['Año'].astype(int)
-    df_proyeccion['UE Proyectadas'] = df_proyeccion['UE Proyectadas'].round(0).astype(int)
+    df_proyeccion['Número de Negocios'] = df_proyeccion['Número de Negocios'].round(0).astype(int)
     df_proyeccion.reset_index(drop=True, inplace=True)
+   
 
-    st.dataframe(df_proyeccion, use_container_width=True)
+# --- Carga y Procesamiento de Datos de Probabilidades ---
+@st.cache_data
+def cargar_probabilidades():
+    """Carga y procesa el archivo de probabilidades."""
+    try:
+        df_prob = pd.read_csv('PROBABILIDADES.csv')
+        df_prob.columns = [col.upper().strip().replace(' ', '_') for col in df_prob.columns]
+        df_prob.rename(columns={'TAMAÑO': 'personal_ocupado_estrato'}, inplace=True)
+        df_prob['ENTIDAD'] = df_prob['ENTIDAD'].str.upper().str.strip()
+        df_prob['SECTOR'] = df_prob['SECTOR'].str.upper().str.strip()
+        df_prob['personal_ocupado_estrato'] = df_prob['personal_ocupado_estrato'].str.upper().str.strip()
+        return df_prob
+    except FileNotFoundError:
+        st.error("Archivo 'PROBABILIDADES.csv' no encontrado.")
+        return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error al leer 'PROBABILIDADES.csv': {e}")
+        return pd.DataFrame()
+
+df_probabilidades = cargar_probabilidades()
+
+# Si el DataFrame de probabilidades está vacío, detenemos la ejecución
+if df_probabilidades.empty:
+    st.stop()
+
+# --- Proyección de los años 2020, 2021 y 2022 ---
+
+# Obtener el valor más reciente para la proyección (2019)
+valor_2019 = df_proyeccion.loc[df_proyeccion['Año'] == 2019, 'Número de Negocios'].iloc[0]
+
+# Preparamos el nombre del sector para el filtro
+sector_filtrado_prob = sector.upper().strip()
+if sector_filtrado_prob == 'SERVICIOS PRIVADOS NO FINANCIEROS':
+    sector_filtrado_prob = 'SERVICIOS PRIVADOS NO FINANCIEROS'
+
+# Bucle para proyectar los años 2020, 2021 y 2022
+proyecciones_futuras = {}
+
+for anio_futuro in range(2020, 2023):
+    # Encontrar las tasas correspondientes en el DataFrame de probabilidades
+    try:
+        tasas = df_probabilidades[
+            (df_probabilidades['ENTIDAD'] == entidad.upper()) &
+            (df_probabilidades['SECTOR'] == sector_filtrado_prob) &
+            (df_probabilidades['personal_ocupado_estrato'] == personal_seleccionado.upper()) &
+            (df_probabilidades['AÑO'] == anio_futuro)
+        ]
+
+        if not tasas.empty:
+            tasa_supervivencia = tasas['SOBREVIVIENTES'].iloc[0]
+            tasa_nacimientos = tasas['NACIMIENTOS'].iloc[0]
+            
+            # Calcular el factor de crecimiento (supervivencia + nacimientos)
+            factor_crecimiento = tasa_supervivencia + tasa_nacimientos
+            
+            # Proyectar el valor del año anterior
+            if anio_futuro == 2020:
+                valor_proyectado = valor_2019 * factor_crecimiento
+            elif anio_futuro == 2021:
+                valor_proyectado = valor_2019 * factor_crecimiento
+            else:
+                valor_proyectado = valor_2019 * factor_crecimiento
+
+            proyecciones_futuras[anio_futuro] = valor_proyectado
+
+        else:
+            st.warning(f"No se encontraron datos en 'PROBABILIDADES.csv' para {entidad}, {sector}, {personal_seleccionado} en el año {anio_futuro}.")
+            proyecciones_futuras[anio_futuro] = None
+
+    except IndexError:
+        st.error(f"Error al obtener tasas para el año {anio_futuro}. Revisa que las columnas 'SOBREVIVIENTES' y 'NACIMIENTOS' existan y contengan valores válidos.")
+        proyecciones_futuras[anio_futuro] = None
+
+# Agregar las proyecciones al DataFrame principal
+if proyecciones_futuras:
+    df_proyeccion_futura = pd.DataFrame(proyecciones_futuras.items(), columns=['Año', 'Número de Negocios'])
+    df_proyeccion = pd.concat([df_proyeccion, df_proyeccion_futura], ignore_index=True)
+
+# Limpiar y formatear el DataFrame de proyecciones final
+df_proyeccion.sort_values(by='Año', inplace=True)
+df_proyeccion.drop_duplicates(subset='Año', keep='last', inplace=True)
+df_proyeccion['Año'] = df_proyeccion['Año'].astype(int)
+df_proyeccion['Número de Negocios'] = df_proyeccion['Número de Negocios'].round(0).astype(int)
+df_proyeccion.reset_index(drop=True, inplace=True)
+
+# Inicializar la columna para evitar errores
+df_proyeccion['Tasa de crecimiento anual'] = None
+
+# Calcular la tasa de crecimiento para cada año
+for i in range(1, len(df_proyeccion)):
+    ue_actual = df_proyeccion.loc[i, 'Número de Negocios']
+    ue_anterior = df_proyeccion.loc[i - 1, 'Número de Negocios']
+    
+    if ue_anterior > 0:
+        tasa = ((ue_actual / ue_anterior) - 1) * 100
+        df_proyeccion.loc[i, 'Tasa de crecimiento anual'] = tasa
+
+# Formatear la nueva columna a dos decimales, excepto la primera fila que no tiene tasa
+df_proyeccion['Tasa de crecimiento anual'] = df_proyeccion['Tasa de crecimiento anual'].apply(
+    lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+)
+
+# Remplazar los ceros por guiones para una mejor visualización en la tabla
+df_proyeccion.replace(0, '-')
+
+# Mostrar el DataFrame final con la nueva columna
+st.dataframe(df_proyeccion, use_container_width=True)
+
+
+
+
+
+
+
+# --- VISUALIZACIÓN DE GRÁFICOS INTERACTIVOS CON PLOTLY ---
+st.markdown("---")
+st.subheader("Visualización de Comportamiento Anual")
+
+col1, col2 = st.columns(2)
+
+with col1:
+# 1. Gráfico de Número de Negocios
+    fig_negocios = px.line(
+        df_proyeccion, 
+        x='Año', 
+        y='Número de Negocios', 
+        title=f"Número de Unidades Económicas Activas: {entidad.title()}, {sector.title()}, {personal_seleccionado}",
+        markers=True,
+        labels={'Año': 'Año', 'Número de Negocios': 'Número de Negocios'}
+    )
+    fig_negocios.update_traces(hovertemplate='<b>Año:</b> %{x}<br><b>Negocios:</b> %{y:,.0f}')
+    fig_negocios.update_layout(hovermode="x unified")
+    st.plotly_chart(fig_negocios, use_container_width=True)
+
+with col2:
+# 2. Gráfico de Tasa de Crecimiento Anual
+    df_crecimiento_plot = df_proyeccion.copy()
+    df_crecimiento_plot['Tasa de crecimiento anual'] = pd.to_numeric(
+        df_crecimiento_plot['Tasa de crecimiento anual'].str.rstrip('%').str.replace(',', ''), 
+        errors='coerce'
+    )
+    
+    fig_crecimiento = px.line(
+        df_crecimiento_plot, 
+        x='Año', 
+        y='Tasa de crecimiento anual', 
+        title=f"Tasa de Crecimiento Anual: {entidad.title()}, {sector.title()}, {personal_seleccionado}",
+        markers=True,
+        labels={'Año': 'Año', 'Tasa de crecimiento anual': 'Tasa de Crecimiento (%)'}
+    )
+    fig_crecimiento.update_traces(hovertemplate='<b>Año:</b> %{x}<br><b>Crecimiento:</b> %{y:.2f}%')
+    fig_crecimiento.update_layout(hovermode="x unified")
+    st.plotly_chart(fig_crecimiento, use_container_width=True)
+
+
+
+
+
