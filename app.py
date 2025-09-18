@@ -1233,11 +1233,20 @@ st.subheader("Matriz de Unidades Económicas")
 if df_final_filtrado.empty:
     st.warning("No se encontraron datos para la combinación de filtros seleccionada. Intenta con otras opciones.")
 else:
+
+
+
+    df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'].apply(lambda x: isinstance(x, (int, float)) or (isinstance(x, str) and x.isdigit()))]
+    df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce').astype(int)
+
+
+    
+    
     df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'] >= 1983]
     
-    df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce')
-    df_final_filtrado.dropna(subset=['generacion'], inplace=True)
-    df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(int)
+    #df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce')
+    #df_final_filtrado.dropna(subset=['generacion'], inplace=True)
+    #df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(int)
 
     tabla_pivote = pd.pivot_table(
         df_final_filtrado,
@@ -1251,7 +1260,7 @@ else:
     tabla_pivote.index.name = 'Año de generación'
     tabla_pivote.columns = [f'Censo {col}' for col in tabla_pivote.columns]
     
-    # Calcular el total antes de formatear
+      # Calcular el total antes de formatear
     tabla_pivote.loc['TOTAL'] = tabla_pivote.sum(axis=0)
 
     # Crear una copia para el formateo
