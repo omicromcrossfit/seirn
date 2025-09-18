@@ -1233,20 +1233,11 @@ st.subheader("Matriz de Unidades Económicas")
 if df_final_filtrado.empty:
     st.warning("No se encontraron datos para la combinación de filtros seleccionada. Intenta con otras opciones.")
 else:
-
-
-
-    df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'].apply(lambda x: isinstance(x, (int, float)) or (isinstance(x, str) and x.isdigit()))]
-    df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce').astype(int)
-
-
-    
-    
     df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'] >= 1983]
     
-    #df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce')
-    #df_final_filtrado.dropna(subset=['generacion'], inplace=True)
-    #df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(int)
+    df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce')
+    df_final_filtrado.dropna(subset=['generacion'], inplace=True)
+    df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(int)
 
     tabla_pivote = pd.pivot_table(
         df_final_filtrado,
@@ -1261,7 +1252,7 @@ else:
     tabla_pivote.columns = [f'Censo {col}' for col in tabla_pivote.columns]
     
       # Calcular el total antes de formatear
-    tabla_pivote.loc['TOTAL'] = tabla_pivote.sum(axis=0)
+    tabla_pivote.loc[''] = tabla_pivote.sum(axis=0)
 
     # Crear una copia para el formateo
     tabla_pivote_formato = tabla_pivote.copy()
@@ -1272,8 +1263,8 @@ else:
     # Formatear los números con separadores de miles
     for col in tabla_pivote_formato.columns:
         # Formatear la fila 'TOTAL' primero
-        if 'TOTAL' in tabla_pivote_formato.index and tabla_pivote_formato.loc['TOTAL', col] != '':
-            tabla_pivote_formato.loc['TOTAL', col] = f"{int(tabla_pivote_formato.loc['TOTAL', col]):,.0f}"
+        if '' in tabla_pivote_formato.index and tabla_pivote_formato.loc['', col] != '':
+            tabla_pivote_formato.loc['', col] = f"{int(tabla_pivote_formato.loc['', col]):,.0f}"
         
         # Formatear el resto de las celdas
         tabla_pivote_formato[col] = tabla_pivote_formato[col].apply(
@@ -1287,7 +1278,7 @@ else:
     #st.subheader("Crecimiento de Unidades Económicas")
 
    # Obtener la fila de totales numéricos de la tabla original
-    totales_numericos = tabla_pivote.loc['TOTAL']
+    totales_numericos = tabla_pivote.loc['']
     
     # Inicializar la lista para los resultados
     resultados_crecimiento = []
