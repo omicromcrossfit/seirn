@@ -1234,9 +1234,16 @@ if df_final_filtrado.empty:
     st.warning("No se encontraron datos para la combinación de filtros seleccionada. Intenta con otras opciones.")
 else:    
     df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(str)
-    # Filtrar solo los valores que son números.
-    df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'].str.isdigit()]
+
+    # Eliminar cualquier fila donde 'generacion' sea igual a 'TOTAL'.
+    df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'] != 'TOTAL']
+    
+    # Convertir 'generacion' a numérico para poder filtrar por año.
     df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'], errors='coerce')
+    df_final_filtrado.dropna(subset=['generacion'], inplace=True)
+    df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(int)
+
+    # Filtrar solo los años mayores o iguales a 1983.
     df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'] >= 1983]
 
     tabla_pivote = pd.pivot_table(
@@ -1271,7 +1278,7 @@ else:
             lambda x: f"{int(x):,.0f}" if isinstance(x, (int, float)) else x
         )
     
-    st.dataframe(tabla_pivote_formato, use_container_width=False)
+    st.dataframe(tabla_pivote_formato, use_container_width=True)
     
   
     # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DE UNIDADES ECONÓMICAS ---
