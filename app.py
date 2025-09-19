@@ -1199,6 +1199,7 @@ with col3:
 
 st.markdown("---")
 
+
 # --- LÓGICA DE FILTROS Y VISUALIZACIÓN ---
 
 df_final_filtrado = df.copy()
@@ -1233,13 +1234,12 @@ st.subheader("Matriz de Unidades Económicas")
 if df_final_filtrado.empty:
     st.warning("No se encontraron datos para la combinación de filtros seleccionada. Intenta con otras opciones.")
 else:
-    # --- CORRECCIÓN CLAVE ---
     # Convertir la columna 'generacion' a string para manejar el texto 'TOTAL' y otros posibles no numéricos.
     df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(str)
-
+    
     # Eliminar cualquier fila donde 'generacion' no sea un número.
     df_final_filtrado = df_final_filtrado[df_final_filtrado['generacion'].str.isdigit()]
-
+    
     # Convertir 'generacion' a numérico para poder filtrar por año.
     df_final_filtrado['generacion'] = pd.to_numeric(df_final_filtrado['generacion'])
     df_final_filtrado['generacion'] = df_final_filtrado['generacion'].astype(int)
@@ -1261,39 +1261,29 @@ else:
     tabla_pivote.index.name = 'Año de generación'
     tabla_pivote.columns = [f'Censo {col}' for col in tabla_pivote.columns]
     
-    # Calcular el total antes de formatear
-    tabla_pivote.loc['TOTAL'] = tabla_pivote.sum(axis=0)
+    # --- CORRECCIÓN CLAVE ---
+    # Crea un DataFrame separado para la visualización y agrega la fila 'TOTAL' aquí.
+    tabla_pivote_para_mostrar = tabla_pivote.copy()
+    tabla_pivote_para_mostrar.loc['TOTAL'] = tabla_pivote_para_mostrar.sum(axis=0)
 
-    # Crear una copia para el formateo
-    tabla_pivote_formato = tabla_pivote.copy()
-
-    # Remplazar los ceros con una cadena vacía para que se vean en blanco
-    tabla_pivote_formato = tabla_pivote_formato.replace(0, '')
-    
     # Formatear los números con separadores de miles
-    for col in tabla_pivote_formato.columns:
+    for col in tabla_pivote_para_mostrar.columns:
         # Formatear la fila 'TOTAL' primero
-        if 'TOTAL' in tabla_pivote_formato.index and tabla_pivote_formato.loc['TOTAL', col] != '':
-            try:
-                tabla_pivote_formato.loc['TOTAL', col] = f"{int(tabla_pivote_formato.loc['TOTAL', col]):,.0f}"
-            except (ValueError, TypeError):
-                # Esto maneja el caso de que el valor sea None o no convertible
-                tabla_pivote_formato.loc['TOTAL', col] = ''
+        if 'TOTAL' in tabla_pivote_para_mostrar.index and isinstance(tabla_pivote_para_mostrar.loc['TOTAL', col], (int, float)):
+            tabla_pivote_para_mostrar.loc['TOTAL', col] = f"{int(tabla_pivote_para_mostrar.loc['TOTAL', col]):,.0f}"
 
         # Formatear el resto de las celdas
-        tabla_pivote_formato[col] = tabla_pivote_formato[col].apply(
+        tabla_pivote_para_mostrar[col] = tabla_pivote_para_mostrar[col].apply(
             lambda x: f"{int(x):,.0f}" if isinstance(x, (int, float)) else x
         )
     
-    st.dataframe(tabla_pivote_formato, use_container_width=True)
+    st.dataframe(tabla_pivote_para_mostrar, use_container_width=True)
     
-    # Tu código para el crecimiento y proyección está bien, el problema estaba en la limpieza de datos
-    # al principio del bloque `else`.
     # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DE UNIDADES ECONÓMICAS ---
     #st.subheader("Crecimiento de Unidades Económicas")
 
     # Obtener la fila de totales numéricos de la tabla original
-    totales_numericos = tabla_pivote.loc['TOTAL']
+    totales_numericos = tabla_pivote.sum(axis=0)
     
     # Inicializar la lista para los resultados
     resultados_crecimiento = []
