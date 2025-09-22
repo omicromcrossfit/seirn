@@ -1252,7 +1252,7 @@ else:
     tabla_pivote.columns = [f'Censo {col}' for col in tabla_pivote.columns]
     
     # Calcular el total antes de formatear
-    tabla_pivote.loc[2000] = tabla_pivote.sum(axis=0)
+    tabla_pivote.loc[0000] = tabla_pivote.sum(axis=0)
 
     # Crear una copia para el formateo
     tabla_pivote_formato = tabla_pivote.copy()
@@ -1263,8 +1263,8 @@ else:
     # Formatear los números con separadores de miles
     for col in tabla_pivote_formato.columns:
         # Formatear la fila 'TOTAL' primero
-        if 2000 in tabla_pivote_formato.index and tabla_pivote_formato.loc[2000, col] != '':
-            tabla_pivote_formato.loc[2000, col] = f"{int(tabla_pivote_formato.loc[2000, col]):,.0f}"
+        if 0000 in tabla_pivote_formato.index and tabla_pivote_formato.loc[2000, col] != '':
+            tabla_pivote_formato.loc[0000, col] = f"{int(tabla_pivote_formato.loc[0000, col]):,.0f}"
         
         # Formatear el resto de las celdas
         tabla_pivote_formato[col] = tabla_pivote_formato[col].apply(
@@ -1278,7 +1278,7 @@ else:
     #st.subheader("Crecimiento de Unidades Económicas")
 
    # Obtener la fila de totales numéricos de la tabla original
-    totales_numericos = tabla_pivote.loc[2000]
+    totales_numericos = tabla_pivote.loc[0000]
     
     # Inicializar la lista para los resultados
     resultados_crecimiento = []
