@@ -1263,13 +1263,21 @@ else:
     # Formatear los números con separadores de miles
     for col in tabla_pivote_formato.columns:
         # Formatear la fila 'TOTAL' primero
-        if 0000 in tabla_pivote_formato.index and tabla_pivote_formato.loc[0000, col] != '':
-            tabla_pivote_formato.loc[0000, col] = f"{int(tabla_pivote_formato.loc[0000, col]):,.0f}"
+        #if 0000 in tabla_pivote_formato.index and tabla_pivote_formato.loc[0000, col] != '':
+        #    tabla_pivote_formato.loc[0000, col] = f"{int(tabla_pivote_formato.loc[0000, col]):,.0f}"
         
         # Formatear el resto de las celdas
-        tabla_pivote_formato[col] = tabla_pivote_formato[col].apply(
-            lambda x: f"{int(x):,.0f}" if isinstance(x, (int, float)) else x
-        )
+        #tabla_pivote_formato[col] = tabla_pivote_formato[col].apply(
+        #   lambda x: f"{int(x):,.0f}" if isinstance(x, (int, float)) else x
+        #)
+        pass
+
+    def format_numbers(x):
+        if pd.isna(x) or x == '':
+            return ''
+        return f"{int(x):,.0f}"
+
+    tabla_pivote_formato = tabla_pivote_formato.applymap(format_numbers)
     
     st.dataframe(tabla_pivote_formato, use_container_width=True)
     
@@ -1279,7 +1287,7 @@ else:
 
    # Obtener la fila de totales numéricos de la tabla original
     totales_numericos = tabla_pivote.loc[0000]
-    
+        
     # Inicializar la lista para los resultados
     resultados_crecimiento = []
     indices_crecimiento = []
@@ -1344,10 +1352,10 @@ else:
         
         # Extraer el año y el valor del censo
         anio_actual = int(censo_actual_str.split(' ')[-1])
-        valor_actual = int(totales_numericos.loc[censo_actual_str])
+        valor_actual = totales_numericos.loc[censo_actual_str]
         
         anio_siguiente = int(censo_siguiente_str.split(' ')[-1])
-        valor_siguiente = int(totales_numericos.loc[censo_siguiente_str])
+        valor_siguiente = totales_numericos.loc[censo_siguiente_str]
         
         # Obtener la tasa de crecimiento para el período
         tasa_anual = df_crecimiento.loc['Índice de crecimiento', f'{anio_actual}-{anio_siguiente}']
