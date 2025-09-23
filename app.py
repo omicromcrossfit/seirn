@@ -1263,7 +1263,7 @@ else:
     # Formatear los números con separadores de miles
     for col in tabla_pivote_formato.columns:
         # Formatear la fila 'TOTAL' primero
-        if 0000 in tabla_pivote_formato.index and tabla_pivote_formato.loc[2000, col] != '':
+        if 0000 in tabla_pivote_formato.index and tabla_pivote_formato.loc[0000, col] != '':
             tabla_pivote_formato.loc[0000, col] = f"{int(tabla_pivote_formato.loc[0000, col]):,.0f}"
         
         # Formatear el resto de las celdas
@@ -1344,10 +1344,10 @@ else:
         
         # Extraer el año y el valor del censo
         anio_actual = int(censo_actual_str.split(' ')[-1])
-        valor_actual = totales_numericos.loc[censo_actual_str]
+        valor_actual = int(totales_numericos.loc[censo_actual_str])
         
         anio_siguiente = int(censo_siguiente_str.split(' ')[-1])
-        valor_siguiente = totales_numericos.loc[censo_siguiente_str]
+        valor_siguiente = int(totales_numericos.loc[censo_siguiente_str])
         
         # Obtener la tasa de crecimiento para el período
         tasa_anual = df_crecimiento.loc['Índice de crecimiento', f'{anio_actual}-{anio_siguiente}']
