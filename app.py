@@ -37,7 +37,7 @@ def cargar_datos():
                 else:
                     separator = ','
             
-            df_temp = pd.read_csv(archivo, encoding='latin1', sep=separator, dtype = {'ENTIDAD' : 'string'})
+            df_temp = pd.read_csv(archivo, encoding='latin1', sep=separator, dtype={'ENTIDAD':'string'})
             
             df_temp.columns = [col.upper().strip().replace(' ', '_') for col in df_temp.columns]
             
