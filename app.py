@@ -1277,7 +1277,7 @@ else:
             return ''
         return f"{int(x):,.0f}"
 
-    tabla_pivote_formato = tabla_pivote_formato.applymap(format_numbers)
+    tabla_pivote_formato = tabla_pivote_formato.map(format_numbers)
     
     st.dataframe(tabla_pivote_formato, use_container_width=True)
     
