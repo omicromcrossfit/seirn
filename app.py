@@ -1,7 +1,11 @@
+"""
+Esta aplicación de Streamlit proporciona un análisis de datos económicos,
+que incluye proyecciones y tasas de crecimiento de diferentes sectores y entidades.
+"""
+import re
 import pandas as pd
 import streamlit as st
 from PIL import Image
-import re
 import plotly.express as px
 
 img = Image.open('inegi.png')
@@ -14,7 +18,7 @@ st.title('Análisis Interactivo Censos Económicos')
 @st.cache_data
 def cargar_datos():
     """Carga y unifica todos los archivos CSV de censos con su censo correspondiente."""
-    
+
     # Mapeo de archivos a años de censo
     mapeo_archivos = {
         'NAC_UE_POT_SEC_1.csv': 1989, 'NAC_UE_POT_SEC_2.csv': 1994,
@@ -24,7 +28,7 @@ def cargar_datos():
     }
 
     lista_df = []
-    
+
     for archivo, anio_censo in mapeo_archivos.items():
         try:
             # Detectar el separador y la codificación
@@ -53,7 +57,7 @@ def cargar_datos():
             
             if 'sector' in df_temp.columns:
                 df_temp['sector'] = df_temp['sector'].str.upper().str.strip()
-            
+
             lista_df.append(df_temp)
         except FileNotFoundError:
             st.warning(f"Archivo no encontrado: {archivo}")
