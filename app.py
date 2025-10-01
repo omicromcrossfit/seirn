@@ -1538,7 +1538,7 @@ df_proyeccion['Tasa de crecimiento anual'] = df_proyeccion['Tasa de crecimiento 
 df_proyeccion.replace(0, '-')
 
 # Mostrar el DataFrame final con la nueva columna
-st.dataframe(df_proyeccion, width='content')
+st.dataframe(df_proyeccion, use_container_width=True)
 
 
 
