@@ -1283,7 +1283,7 @@ else:
 
     tabla_pivote_formato = tabla_pivote_formato.map(format_numbers)
 
-    st.dataframe(tabla_pivote_formato, width='content', height=600)
+    st.dataframe(tabla_pivote_formato, use_container_width=True)
 
     # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DE UNIDADES ECONÓMICAS ---
     #st.subheader("Crecimiento de Unidades Económicas")
