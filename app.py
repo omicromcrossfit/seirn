@@ -1282,10 +1282,9 @@ else:
         return f"{int(x):,.0f}"
 
     tabla_pivote_formato = tabla_pivote_formato.map(format_numbers)
-    
-    st.dataframe(tabla_pivote_formato, use_container_width=True)
-    
-  
+
+    st.dataframe(tabla_pivote_formato, width='content', height=600)
+
     # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DE UNIDADES ECONÓMICAS ---
     #st.subheader("Crecimiento de Unidades Económicas")
 
@@ -1340,8 +1339,9 @@ else:
 
 # --- PROYECCIÓN DE UNIDADES ECONÓMICAS ---
     st.markdown("---")
-    st.subheader(f"Comportamiento anual del numero de unidades económicas activas en {entidad}, pertenecientes al sector {sector} con {personal_seleccionado}")
-    
+    st.header('Número de Negocios Activos')
+    st.markdown('---')
+       
     
     # Obtener la lista de censos y valores
     censos_str = totales_numericos.index.tolist()
@@ -1489,13 +1489,13 @@ for anio_futuro in range(2020, 2023):
             
             # Proyectar el valor del año anterior
             if anio_futuro == 2020:
-                valor_proyectado = valor_2019 * factor_crecimiento
+                proyected_value = valor_2019 * factor_crecimiento
             elif anio_futuro == 2021:
-                valor_proyectado = valor_2019 * factor_crecimiento
+                proyected_value = valor_2019 * factor_crecimiento
             else:
-                valor_proyectado = valor_2019 * factor_crecimiento
+                proyected_value = valor_2019 * factor_crecimiento
 
-            proyecciones_futuras[anio_futuro] = valor_proyectado
+            proyecciones_futuras[anio_futuro] = proyected_value
 
         else:
             st.warning(f"No se encontraron datos en 'PROBABILIDADES.csv' para {entidad}, {sector}, {personal_seleccionado} en el año {anio_futuro}.")
@@ -1537,22 +1537,20 @@ df_proyeccion['Tasa de crecimiento anual'] = df_proyeccion['Tasa de crecimiento 
 # Remplazar los ceros por guiones para una mejor visualización en la tabla
 df_proyeccion.replace(0, '-')
 
-# Mostrar el DataFrame final con la nueva columna
-st.dataframe(df_proyeccion, use_container_width=True)
 
-
-
-
-
-
-
-# --- VISUALIZACIÓN DE GRÁFICOS INTERACTIVOS CON PLOTLY ---
-st.markdown("---")
-st.subheader("Visualización de Comportamiento Anual")
-
-col1, col2 = st.columns(2)
-
+col1, col2 = st.columns([40, 60])
 with col1:
+    # Mostrar el DataFrame final con la nueva columna
+    st.subheader(f"Comportamiento anual del número de unidades económicas activas en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+    st.dataframe(df_proyeccion, width='stretch', height=800)
+
+
+
+
+with col2:
+# --- VISUALIZACIÓN DE GRÁFICOS INTERACTIVOS CON PLOTLY ---
+    st.subheader("Visualización de Comportamiento Anual")
+
 # 1. Gráfico de Número de Negocios
     fig_negocios = px.line(
         df_proyeccion, 
@@ -1566,7 +1564,7 @@ with col1:
     fig_negocios.update_layout(hovermode="x unified")
     st.plotly_chart(fig_negocios, use_container_width=True)
 
-with col2:
+
 # 2. Gráfico de Tasa de Crecimiento Anual
     df_crecimiento_plot = df_proyeccion.copy()
     df_crecimiento_plot['Tasa de crecimiento anual'] = pd.to_numeric(
@@ -1587,6 +1585,94 @@ with col2:
     st.plotly_chart(fig_crecimiento, use_container_width=True)
 
 
+#----NACIMIENTO DE UNIDADES ECONÓMICAS ----
+
+
+st.markdown("---")
+st.subheader("Nacimiento de Unidades Económicas")
+
+indices = [(i + 1) * 5 for i in range(len(tabla_pivote.columns))]
+valores = []
+for i, col in enumerate(tabla_pivote.columns):
+    idx = indices[i]
+    if idx < len(tabla_pivote):
+        valores.append(tabla_pivote[col].iloc[idx])
+    else:
+        valores.append(None)
+
+# Crear una Serie con los resultados y el nombre de la columna original
+resultado_columna = pd.Series(valores, index=tabla_pivote.columns, name="Nacimientos")
+resultado_columna = resultado_columna.fillna(0)
+resultado_columna = pd.to_numeric(resultado_columna, errors='coerce')
+
+import numpy as np
+
+# resultado_columna: Serie con los valores seleccionados por columna (por ejemplo, nacimientos por año)
+# Asegúrate de que el índice de resultado_columna esté ordenado cronológicamente
+resultado_columna = resultado_columna.sort_index()
+
+# Calcular el factor de crecimiento
+factor_crecimiento = []
+for i in range(1, len(resultado_columna)):
+    if resultado_columna.iloc[i-1] and resultado_columna.iloc[i]:
+        factor = (int(resultado_columna.iloc[i]) / int(resultado_columna.iloc[i-1])) ** 0.2
+    else:
+        factor = np.nan
+    factor_crecimiento.append(factor)
+
+# El primer año no tiene comparación, así que se pone NaN
+factor_crecimiento = [np.nan] + factor_crecimiento
+
+# Crear DataFrame con ambas columnas
+df_resultado = pd.DataFrame({
+    "Nacimientos": resultado_columna.values,
+    "Factor de crecimiento": factor_crecimiento
+}, index=resultado_columna.index)
+
+st.dataframe(df_resultado,use_container_width=False, height='auto')
 
 
 
+
+
+
+
+
+df_referencia = pd.DataFrame(df_resultado)
+df_referencia['Año'] = [1989, 1994, 1999, 2004, 2009, 2014, 2019]
+df_referencia = df_referencia.set_index('Año')
+
+# 2. Creación de la Nueva Tabla Final
+AÑO_INICIO = 1988
+AÑO_FIN = 1989 # Solo necesitamos hasta 1989 por ahora
+
+# DataFrame final solo con los años solicitados
+df_final = pd.DataFrame(index=range(AÑO_INICIO, AÑO_FIN + 1), columns=['Nacimientos'])
+
+
+# 3. Aplicación de la Lógica Solicitada
+
+# Paso 1: Fila 1988
+# Instrucción: Para la primera fila toma año de censo de 1988 y pasar el dato que contiene
+# nacimientos a la columna de nacimientos. (Asumimos que el dato para 1988 es el Nacimiento de 1989)
+nacimientos_1988 = df_referencia.loc[1989, 'Nacimientos']
+df_final.loc[1988, 'Nacimientos'] = nacimientos_1988
+
+# Paso 2: Fila 1989
+# Instrucción: Para 1989 toma el dato de la columna nacimientos del año 1988
+# y multiplica ese valor por el factor de crecimiento que está en la fila de 1994.
+
+# 2a. Obtener los datos necesarios
+valor_nacimientos_1988 = df_final.loc[1988, 'Nacimientos']
+factor_1994 = df_referencia.loc[1994, 'Factor de crecimiento']
+
+# 2b. Calcular y asignar el valor
+nacimientos_1989 = valor_nacimientos_1988 * factor_1994
+df_final.loc[1989, 'Nacimientos'] = nacimientos_1989
+
+
+# Conversión final y visualización
+df_final['Nacimientos'] = pd.to_numeric(df_final['Nacimientos']).round().astype(int)
+
+
+st.dataframe(df_final,use_container_width=False, height='auto')
