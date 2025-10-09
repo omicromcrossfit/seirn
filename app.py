@@ -1542,9 +1542,7 @@ col1, col2 = st.columns([40, 60])
 with col1:
     # Mostrar el DataFrame final con la nueva columna
     st.subheader(f"Comportamiento anual del número de unidades económicas activas en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
-    st.dataframe(df_proyeccion, width='stretch', height=800)
-
-
+    st.dataframe(df_proyeccion, use_container_width=True, height=900)
 
 
 with col2:
@@ -1562,8 +1560,14 @@ with col2:
     )
     fig_negocios.update_traces(hovertemplate='<b>Año:</b> %{x}<br><b>Negocios:</b> %{y:,.0f}')
     fig_negocios.update_layout(hovermode="x unified")
-    st.plotly_chart(fig_negocios, use_container_width=True)
+    
+    with st.container(border=True):
+        st.plotly_chart(fig_negocios, use_container_width=True)
+    
 
+    
+    
+    #st.markdown("---")
 
 # 2. Gráfico de Tasa de Crecimiento Anual
     df_crecimiento_plot = df_proyeccion.copy()
@@ -1582,14 +1586,17 @@ with col2:
     )
     fig_crecimiento.update_traces(hovertemplate='<b>Año:</b> %{x}<br><b>Crecimiento:</b> %{y:.2f}%')
     fig_crecimiento.update_layout(hovermode="x unified")
-    st.plotly_chart(fig_crecimiento, use_container_width=True)
+    
+    with st.container(border=True):
+        st.plotly_chart(fig_crecimiento, use_container_width=True)
+    
 
 
 #----NACIMIENTO DE UNIDADES ECONÓMICAS ----
 
 
 st.markdown("---")
-st.subheader("Nacimiento de Unidades Económicas")
+#st.subheader("Nacimiento de Unidades Económicas")
 
 indices = [(i + 1) * 5 for i in range(len(tabla_pivote.columns))]
 valores = []
@@ -1629,7 +1636,7 @@ df_resultado = pd.DataFrame({
     "Factor de crecimiento": factor_crecimiento
 }, index=resultado_columna.index)
 
-st.dataframe(df_resultado,use_container_width=False, height='auto')
+#st.dataframe(df_resultado,use_container_width=False, height='auto')
 
 
 
@@ -1642,19 +1649,11 @@ df_referencia = pd.DataFrame(df_resultado)
 df_referencia['Año'] = [1989, 1994, 1999, 2004, 2009, 2014, 2019]
 df_referencia = df_referencia.set_index('Año')
 
-# 2. Creación de la Nueva Tabla Final
-AÑO_INICIO = 1988
-AÑO_FIN = 1989 # Solo necesitamos hasta 1989 por ahora
 
 # DataFrame final solo con los años solicitados
-df_final = pd.DataFrame(index=range(AÑO_INICIO, AÑO_FIN + 1), columns=['Nacimientos'])
+df_final = pd.DataFrame(columns=['Nacimientos'])
 
 
-# 3. Aplicación de la Lógica Solicitada
-
-# Paso 1: Fila 1988
-# Instrucción: Para la primera fila toma año de censo de 1988 y pasar el dato que contiene
-# nacimientos a la columna de nacimientos. (Asumimos que el dato para 1988 es el Nacimiento de 1989)
 nacimientos_1988 = df_referencia.loc[1989, 'Nacimientos']
 df_final.loc[1988, 'Nacimientos'] = nacimientos_1988
 
@@ -1665,14 +1664,142 @@ df_final.loc[1988, 'Nacimientos'] = nacimientos_1988
 # 2a. Obtener los datos necesarios
 valor_nacimientos_1988 = df_final.loc[1988, 'Nacimientos']
 factor_1994 = df_referencia.loc[1994, 'Factor de crecimiento']
+factor_1999 = df_referencia.loc[1999, 'Factor de crecimiento']
+factor_2004 = df_referencia.loc[2004, 'Factor de crecimiento']
+factor_2009 = df_referencia.loc[2009, 'Factor de crecimiento']
+factor_2014 = df_referencia.loc[2014, 'Factor de crecimiento']
+factor_2019 = df_referencia.loc[2019, 'Factor de crecimiento']
 
 # 2b. Calcular y asignar el valor
 nacimientos_1989 = valor_nacimientos_1988 * factor_1994
-df_final.loc[1989, 'Nacimientos'] = nacimientos_1989
+nacimientos_1990 = nacimientos_1989 * factor_1994
+nacimientos_1991 = nacimientos_1990 * factor_1994
+nacimientos_1992 = nacimientos_1991 * factor_1994
+nacimientos_1993 = df_referencia.loc[1994, 'Nacimientos']
+nacimientos_1994 = nacimientos_1993 * factor_1999
+nacimientos_1995 = nacimientos_1994 * factor_1999
+nacimientos_1996 = nacimientos_1995 * factor_1999
+nacimientos_1997 = nacimientos_1996 * factor_1999
+nacimientos_1998 = df_referencia.loc[1999, 'Nacimientos']
+nacimientos_1999 = nacimientos_1998 * factor_2004
+nacimientos_2000 = nacimientos_1999 * factor_2004
+nacimientos_2001 = nacimientos_2000 * factor_2004
+nacimientos_2002 = nacimientos_2001 * factor_2004
+nacimientos_2003 = df_referencia.loc[2004, 'Nacimientos']
+nacimientos_2004 = nacimientos_2003 * factor_2009
+nacimientos_2005 = nacimientos_2004 * factor_2009
+nacimientos_2006 = nacimientos_2005 * factor_2009
+nacimientos_2007 = nacimientos_2006 * factor_2009
+nacimientos_2008 = df_referencia.loc[2009, 'Nacimientos']
+nacimientos_2009 = nacimientos_2008 * factor_2014
+nacimientos_2010 = nacimientos_2009 * factor_2014
+nacimientos_2011 = nacimientos_2010 * factor_2014
+nacimientos_2012 = nacimientos_2011 * factor_2014
+nacimientos_2013 = df_referencia.loc[2014, 'Nacimientos']
+nacimientos_2014 = nacimientos_2013 * factor_2019
+nacimientos_2015 = nacimientos_2014 * factor_2019
+nacimientos_2016 = nacimientos_2015 * factor_2019
+nacimientos_2017 = nacimientos_2016 * factor_2019
+nacimientos_2018 = df_referencia.loc[2019, 'Nacimientos']
 
+df_final.loc[1989, 'Nacimientos'] = nacimientos_1989
+df_final.loc[1990, 'Nacimientos'] = nacimientos_1990
+df_final.loc[1991, 'Nacimientos'] = nacimientos_1991
+df_final.loc[1992, 'Nacimientos'] = nacimientos_1992
+df_final.loc[1993, 'Nacimientos'] = nacimientos_1993
+df_final.loc[1994, 'Nacimientos'] = nacimientos_1994
+df_final.loc[1995, 'Nacimientos'] = nacimientos_1995
+df_final.loc[1996, 'Nacimientos'] = nacimientos_1996
+df_final.loc[1997, 'Nacimientos'] = nacimientos_1997
+df_final.loc[1998, 'Nacimientos'] = nacimientos_1998
+df_final.loc[1999, 'Nacimientos'] = nacimientos_1999
+df_final.loc[2000, 'Nacimientos'] = nacimientos_2000
+df_final.loc[2001, 'Nacimientos'] = nacimientos_2001
+df_final.loc[2002, 'Nacimientos'] = nacimientos_2002
+df_final.loc[2003, 'Nacimientos'] = nacimientos_2003
+df_final.loc[2004, 'Nacimientos'] = nacimientos_2004
+df_final.loc[2005, 'Nacimientos'] = nacimientos_2005
+df_final.loc[2006, 'Nacimientos'] = nacimientos_2006
+df_final.loc[2007, 'Nacimientos'] = nacimientos_2007
+df_final.loc[2008, 'Nacimientos'] = nacimientos_2008
+df_final.loc[2009, 'Nacimientos'] = nacimientos_2009
+df_final.loc[2010, 'Nacimientos'] = nacimientos_2010
+df_final.loc[2011, 'Nacimientos'] = nacimientos_2011
+df_final.loc[2012, 'Nacimientos'] = nacimientos_2012
+df_final.loc[2013, 'Nacimientos'] = nacimientos_2013
+df_final.loc[2014, 'Nacimientos'] = nacimientos_2014
+df_final.loc[2015, 'Nacimientos'] = nacimientos_2015
+df_final.loc[2016, 'Nacimientos'] = nacimientos_2016
+df_final.loc[2017, 'Nacimientos'] = nacimientos_2017
+df_final.loc[2018, 'Nacimientos'] = nacimientos_2018
 
 # Conversión final y visualización
+#df_final['Nacimientos'] = pd.to_numeric(df_final['Nacimientos']).round().astype(int)
+
+
+#st.dataframe(df_final,use_container_width=False, height=800)
+
+
+
+try:
+    df_referencia = pd.DataFrame(df_resultado)
+except NameError:
+    # Usamos la estructura de datos anterior si df_resultado no está definido
+    data = {
+        'Censo': ['Censo 1989', 'Censo 1994', 'Censo 1999', 'Censo 2004', 'Censo 2009', 'Censo 2014', 'Censo 2019'],
+        'Nacimientos': [141, 435, 374, 467, 365, 458, 409],
+        'Factor de crecimiento': [np.nan, 1.252720051, 0.970233954, 1.045415791, 0.951908482, 1.046440459, 0.97762335]
+    }
+    df_referencia = pd.DataFrame(data)
+
+# 1. Preparación de la Tabla de Referencia
+df_referencia['Año'] = [1989, 1994, 1999, 2004, 2009, 2014, 2019]
+df_referencia = df_referencia.set_index('Año')
+# Convertir a Series para acceso directo
+nacimientos_ref = df_referencia['Nacimientos']
+factor_ref = df_referencia['Factor de crecimiento']
+
+# Definir los años de inicio y fin para el bucle
+AÑO_INICIO = 1988
+AÑO_FIN = 2018
+rango_años = range(AÑO_INICIO, AÑO_FIN + 1)
+# Puntos de quiebre para el ajuste (Toma el valor del censo siguiente)
+AÑOS_DE_AJUSTE = [1993, 1998, 2003, 2008, 2013] # El último ajuste es 2018
+# Puntos de referencia para el factor
+AÑOS_DE_FACTOR = [1994, 1999, 2004, 2009, 2014, 2019]
+
+# 2. Creación e Inicialización del DataFrame Final
+df_final = pd.DataFrame(index=rango_años, columns=['Nacimientos'])
+# Inicializar el año base (1988 toma el valor de 1989)
+df_final.loc[AÑO_INICIO, 'Nacimientos'] = nacimientos_ref.loc[1989]
+
+
+# 3. Lógica de Imputación con Bucle Iterativo
+factor_actual = factor_ref.loc[1994] # Empezamos con el factor de 1994
+
+for año in range(AÑO_INICIO + 1, AÑO_FIN + 1):
+    
+    # a) Determinar qué Factor de Crecimiento usar (Actualización del factor)
+    # Si el año ANTERIOR es un punto de quiebre (1993, 1998, etc.), el factor cambia.
+    # El factor se aplica *después* del año ajustado.
+    if año - 1 in AÑOS_DE_AJUSTE:
+        # Encontramos el siguiente año de factor. Ej: 1994 después de 1993.
+        siguiente_factor_año = AÑOS_DE_FACTOR[AÑOS_DE_FACTOR.index(año - 1 + 1)]
+        factor_actual = factor_ref.loc[siguiente_factor_año]
+    
+    
+    # b) Aplicar la Regla de Nacimientos
+    if año in AÑOS_DE_AJUSTE or año == AÑO_FIN: # Ej: 1993, 1998, 2018
+        # REGLA DE AJUSTE: El valor es el Nacimiento del Censo siguiente.
+        año_censo_siguiente = año + 1
+        df_final.loc[año, 'Nacimientos'] = nacimientos_ref.loc[año_censo_siguiente]
+        
+    else:
+        # REGLA DE PROYECCIÓN: Valor Anterior * Factor Actual.
+        valor_anterior = df_final.loc[año - 1, 'Nacimientos']
+        df_final.loc[año, 'Nacimientos'] = valor_anterior * factor_actual
+
+# 4. Finalización y Visualización
 df_final['Nacimientos'] = pd.to_numeric(df_final['Nacimientos']).round().astype(int)
 
-
-st.dataframe(df_final,use_container_width=False, height='auto')
+#st.dataframe(df_final,use_container_width=False, height=800)
