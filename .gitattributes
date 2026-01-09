@@ -1,1 +1,12 @@
+<<<<<<< HEAD
 *.csv filter=lfs diff=lfs merge=lfs -text
+=======
+NAC_UE_POT_SEC_ filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_1.csv filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_2.csv filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_3.csv filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_4.csv filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_5.csv filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_6.csv filter=lfs diff=lfs merge=lfs -text
+NAC_UE_POT_SEC_7.csv filter=lfs diff=lfs merge=lfs -text
+>>>>>>> 64dea3f0b6b60db785977b789c6d2f16fd252791
