@@ -5,6 +5,7 @@ que incluye proyecciones y tasas de crecimiento de diferentes sectores y entidad
 
 import re
 import pandas as pd
+import numpy as np
 import streamlit as st
 from PIL import Image
 import plotly.express as px
@@ -15,7 +16,8 @@ img = Image.open('inegi.png')
 
 st.set_page_config(page_title='Demografía de Negocios', page_icon=img, layout='wide')
 
-st.title('Modelo de indicadores demográficos de las unidades económicas y los empleos en México')
+st.title('Simulador de los Resultados de los Indicadores Demográficos Económicos de México')
+
 
 # --- CARGA Y PROCESAMIENTO DE DATOS PRINCIPALES ---
 @st.cache_data
@@ -1195,12 +1197,20 @@ with st.sidebar:
             ['CONCENTRADOS','0-2 Personas ocupadas','3 y más Personas ocupadas']
         )
 
+    
+    #--- SELECCIÓN DE VARIABLES DE ANÁLISIS ---
 
     st.write('FENÓMENO DEMOGRÁFICO')
     fenomeno_demografico = st.radio('Seleccionar:', ['Población activa', 'Natalidad', 'Supervivencia','Mortalidad'],label_visibility='visible')
-    st.write('UNIDAD DE MEDIDA:')
+    st.write('VARIABLE DE ANÁLISIS:')
     mostrar_unidades = st.checkbox("Negocios", value=True)
     mostrar_personal = st.checkbox("Empleos", value=False)
+
+    
+    options = ["Mostrar Matriz"]
+    selection = st.segmented_control(
+        "MATRIZ DE DATOS", options, selection_mode="single"
+    )
 
 mapa_estratos = {
     '0-2 Personas ocupadas': 1,
@@ -1224,7 +1234,7 @@ mapa_estratos = {
 }
 # --- FIN DE SELECTBOXES ---
 
-st.markdown("---")
+
 
 # --- LÓGICA DE FILTROS Y VISUALIZACIÓN ---
 
@@ -1281,7 +1291,7 @@ else:
         )
 
         # Asegurar que el índice tenga nombre
-        tabla_pivote.index.name = 'Año de generación'
+        tabla_pivote.index.name = 'Año'
 
         # Aplanar columnas para que queden como: "Censo 2008 - Unidades Económicas"
         tabla_pivote.columns = [f"CE {col} - {metrica.upper()}" for metrica, col in tabla_pivote.columns]
@@ -1295,10 +1305,25 @@ else:
         # Formatear tabla
         tabla_formato = tabla_pivote.replace(0, '')
         tabla_formato = tabla_formato.map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
-
-        st.dataframe(tabla_formato, use_container_width=True)
+        
+        #st.dataframe(tabla_formato, use_container_width=True)
     else:
         st.info("Selecciona al menos una casilla para mostrar la información.")
+
+matriz_principal = tabla_formato.copy()
+
+
+if selection == 'Mostrar Matriz':
+    st.markdown('---')
+    st.dataframe(matriz_principal, use_container_width=True)
+else:
+    st.empty()
+    
+        
+
+
+
+
 
 
 # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DINÁMICO ---
@@ -1370,7 +1395,7 @@ df_transpuesto = df_totales.T.reset_index()
 df_transpuesto.columns = ['Columna_Original','Total']
 df_transpuesto[['Año','Unidad']] = df_transpuesto['Columna_Original'].str.split(' - ', expand=True)
 df_final = df_transpuesto.pivot(index='Unidad', columns='Año', values='Total')
-#st.dataframe(df_final, use_container_width=True) #PONER NUMERAL CUANDO SEA NECESARIO VER
+#st.dataframe(df_final, use_container_width=True) #QUITAR NUMERAL CUANDO SEA NECESARIO VER
 
 # --- CARGA Y PROCESAMIENTO DE DATOS DE PROBABILIDADES ---
 @st.cache_data
@@ -1660,11 +1685,11 @@ if fenomeno_demografico == 'Población activa':
     # Formatear las columnas a dos decimales con símbolo %
     if mostrar_unidades:
         df_proyeccion['Tasa Crecimiento UE (%)'] = df_proyeccion['Tasa Crecimiento UE (%)'].apply(
-            lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+            lambda x: f"{x:,.2f}" if pd.notna(x) else None
         )
     if mostrar_personal:
         df_proyeccion['Tasa Crecimiento PO (%)'] = df_proyeccion['Tasa Crecimiento PO (%)'].apply(
-            lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+            lambda x: f"{x:,.2f}" if pd.notna(x) else None
         )
 
     # --- VISUALIZACIÓN DE LA TABLA Y GRÁFICOS INTERACTIVOS ---
@@ -1740,12 +1765,12 @@ if fenomeno_demografico == 'Población activa':
                 margin={'t': 110}
             )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>UNIDADES ECONÓMICAS</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>UNIDADES ECONÓMICAS</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>PERSONAL OCUPADO TOTAL</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>PERSONAL OCUPADO TOTAL</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>UNIDADES ECONÓMICAS</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>PERSONAL OCUPADO TOTAL</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>UNIDADES ECONÓMICAS</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>PERSONAL OCUPADO TOTAL</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
         
@@ -1790,7 +1815,7 @@ if fenomeno_demografico == 'Población activa':
             xaxis_title = 'Año',
             margin={'t': 110}
         )
-        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
         with st.container(border=True):
             st.plotly_chart(fig_negocios_tasas, use_container_width=True)
         st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
@@ -1889,9 +1914,9 @@ else:
 # Inicializar DataFrame con columnas dinámicas según selección
 columnas = ['Año']
 if mostrar_unidades:
-    columnas += ('Número de Nacimientos','Tasa de Natalidad UE','Tasa Crecimiento Anual de la Natalidad')    
+    columnas += ('Número de Nacimientos','Tasa de Natalidad UE (%)','Tasa Crecimiento Anual de la Natalidad (%)')    
 if mostrar_personal:
-    columnas += ('Nacimiento de Empleos','Tasa de Natalidad PO','Tasa Crecimiento Anual de Empleos')    
+    columnas += ('Nacimiento de Empleos','Tasa de Natalidad PO (%)','Tasa Crecimiento Anual de Empleos (%)')    
 
 df_proyeccion_nat = pd.DataFrame(columns=columnas)
 
@@ -2125,10 +2150,10 @@ if mostrar_personal and 'Nacimiento de Empleos' in df_proyeccion_nat.columns:
 
 # --- CÁLCULO DE TASAS DE NATALIDAD (%) ---    
 # Asegurar que las columnas existan
-if mostrar_unidades and 'Tasa de Natalidad UE' not in df_proyeccion_nat.columns:
-    df_proyeccion_nat['Tasa de Natalidad UE'] = None
-if mostrar_personal and 'Tasa de Natalidad PO' not in df_proyeccion_nat.columns:
-    df_proyeccion_nat['Tasa de Natalidad PO'] = None
+if mostrar_unidades and 'Tasa de Natalidad UE (%)' not in df_proyeccion_nat.columns:
+    df_proyeccion_nat['Tasa de Natalidad UE (%)'] = None
+if mostrar_personal and 'Tasa de Natalidad PO (%)' not in df_proyeccion_nat.columns:
+    df_proyeccion_nat['Tasa de Natalidad PO (%)'] = None
 
 # Calcular tasas para cada año
 for idx, row in df_proyeccion_nat.iterrows():
@@ -2143,19 +2168,19 @@ for idx, row in df_proyeccion_nat.iterrows():
             numero_negocios = datos_base['Número de Negocios']
             if numero_negocios > 0:
                 tasa_ue = (row['Número de Nacimientos'] / numero_negocios) * 100
-                df_proyeccion_nat.at[idx, 'Tasa de Natalidad UE'] = round(tasa_ue, 2)                    
+                df_proyeccion_nat.at[idx, 'Tasa de Natalidad UE (%)'] = round(tasa_ue, 2)                    
     
         # Calcular tasa PO
         if mostrar_personal and pd.notnull(row.get('Nacimiento de Empleos')) and 'Personal Ocupado' in datos_base:
             personal_ocupado = datos_base['Personal Ocupado']
             if personal_ocupado > 0:
                 tasa_po = (row['Nacimiento de Empleos'] / personal_ocupado) * 100
-                df_proyeccion_nat.at[idx, 'Tasa de Natalidad PO'] = round(tasa_po, 2)
+                df_proyeccion_nat.at[idx, 'Tasa de Natalidad PO (%)'] = round(tasa_po, 2)
 
 
 if mostrar_unidades:
-    tasanat1998 = df_proyeccion_nat.loc[df_proyeccion_nat['Año'] == 1998, 'Tasa de Natalidad UE'].iloc[0]
-    tasanat1993 = df_proyeccion_nat.loc[df_proyeccion_nat['Año'] == 1993, 'Tasa de Natalidad UE'].iloc[0]    
+    tasanat1998 = df_proyeccion_nat.loc[df_proyeccion_nat['Año'] == 1998, 'Tasa de Natalidad UE (%)'].iloc[0]
+    tasanat1993 = df_proyeccion_nat.loc[df_proyeccion_nat['Año'] == 1993, 'Tasa de Natalidad UE (%)'].iloc[0]    
 
 
 #----DATOS AÑOS 2020,2021,2022 NATALIDAD 2a VEZ
@@ -2252,9 +2277,9 @@ else:
 # Inicializar DataFrame con columnas dinámicas según selección
 columnas = ['Año']
 if mostrar_unidades:
-    columnas += ('Número de Nacimientos','Tasa de Natalidad UE','Tasa Crecimiento Anual de la Natalidad')    
+    columnas += ('Número de Nacimientos','Tasa de Natalidad UE (%)','Tasa Crecimiento Anual de la Natalidad (%)')    
 if mostrar_personal:
-    columnas += ('Nacimiento de Empleos','Tasa de Natalidad PO','Tasa Crecimiento Anual de Empleos')    
+    columnas += ('Nacimiento de Empleos','Tasa de Natalidad PO (%)','Tasa Crecimiento Anual de Empleos (%)')    
 
 df_proyeccion_nat = pd.DataFrame(columns=columnas)
 
@@ -2500,10 +2525,10 @@ if mostrar_personal and 'Nacimiento de Empleos' in df_proyeccion_nat.columns:
 
 # --- CÁLCULO DE TASAS DE NATALIDAD (%) ---    
 # Asegurar que las columnas existan
-if mostrar_unidades and 'Tasa de Natalidad UE' not in df_proyeccion_nat.columns:
-    df_proyeccion_nat['Tasa de Natalidad UE'] = None
-if mostrar_personal and 'Tasa de Natalidad PO' not in df_proyeccion_nat.columns:
-    df_proyeccion_nat['Tasa de Natalidad PO'] = None
+if mostrar_unidades and 'Tasa de Natalidad UE (%)' not in df_proyeccion_nat.columns:
+    df_proyeccion_nat['Tasa de Natalidad UE (%)'] = None
+if mostrar_personal and 'Tasa de Natalidad PO (%)' not in df_proyeccion_nat.columns:
+    df_proyeccion_nat['Tasa de Natalidad PO (%)'] = None
 
 # Calcular tasas para cada año
 for idx, row in df_proyeccion_nat.iterrows():
@@ -2518,24 +2543,24 @@ for idx, row in df_proyeccion_nat.iterrows():
             numero_negocios = datos_base['Número de Negocios']
             if numero_negocios > 0:
                 tasa_ue = (row['Número de Nacimientos'] / numero_negocios) * 100
-                df_proyeccion_nat.at[idx, 'Tasa de Natalidad UE'] = round(tasa_ue, 2)                    
+                df_proyeccion_nat.at[idx, 'Tasa de Natalidad UE (%)'] = round(tasa_ue, 2)                    
     
         # Calcular tasa PO
         if mostrar_personal and pd.notnull(row.get('Nacimiento de Empleos')) and 'Personal Ocupado' in datos_base:
             personal_ocupado = datos_base['Personal Ocupado']
             if personal_ocupado > 0:
                 tasa_po = (row['Nacimiento de Empleos'] / personal_ocupado) * 100
-                df_proyeccion_nat.at[idx, 'Tasa de Natalidad PO'] = round(tasa_po, 2)
+                df_proyeccion_nat.at[idx, 'Tasa de Natalidad PO (%)'] = round(tasa_po, 2)
 
 #st.dataframe(df_proyeccion_nat, use_container_width = True)
 
     # --- CÁLCULO DE TASAS DE CRECIMIENTO ANUAL DE LA NATALIDAD ---
 # Tasa de crecimiento anual
 
-if mostrar_unidades and 'Tasa Crecimiento Anual de la Natalidad' not in df_proyeccion_nat.columns:
-    df_proyeccion_nat['Tasa Crecimiento Anual de la Natalidad'] = None
-if mostrar_personal and 'Tasa Crecimiento Anual de Empleos' not in df_proyeccion_nat.columns:
-    df_proyeccion_nat['Tasa Crecimiento Anual de Empleos'] = None
+if mostrar_unidades and 'Tasa Crecimiento Anual de la Natalidad (%)' not in df_proyeccion_nat.columns:
+    df_proyeccion_nat['Tasa Crecimiento Anual de la Natalidad (%)'] = None
+if mostrar_personal and 'Tasa Crecimiento Anual de Empleos (%)' not in df_proyeccion_nat.columns:
+    df_proyeccion_nat['Tasa Crecimiento Anual de Empleos (%)'] = None
 
 for i in range(1, len(df_proyeccion_nat)):        
     if mostrar_unidades:
@@ -2543,7 +2568,7 @@ for i in range(1, len(df_proyeccion_nat)):
         ue_anterior = df_proyeccion_nat.loc[i - 1, 'Número de Nacimientos']
         if ue_anterior > 0:
             tasa_ue = ((ue_actual / ue_anterior) - 1) * 100
-            df_proyeccion_nat.loc[i, 'Tasa Crecimiento Anual de la Natalidad'] = tasa_ue
+            df_proyeccion_nat.loc[i, 'Tasa Crecimiento Anual de la Natalidad (%)'] = tasa_ue
 
     # Personal Ocupado
     if mostrar_personal:
@@ -2551,23 +2576,23 @@ for i in range(1, len(df_proyeccion_nat)):
         po_anterior = df_proyeccion_nat.loc[i - 1, 'Nacimiento de Empleos']
         if po_anterior > 0:
             tasa_po = ((po_actual / po_anterior) - 1) * 100
-            df_proyeccion_nat.loc[i, 'Tasa Crecimiento Anual de Empleos'] = tasa_po
+            df_proyeccion_nat.loc[i, 'Tasa Crecimiento Anual de Empleos (%)'] = tasa_po
 
 
 # Formatear las columnas a dos decimales con símbolo %
 if mostrar_unidades:
-    df_proyeccion_nat['Tasa de Natalidad UE'] = df_proyeccion_nat['Tasa de Natalidad UE'].apply(
-        lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+    df_proyeccion_nat['Tasa de Natalidad UE (%)'] = df_proyeccion_nat['Tasa de Natalidad UE (%)'].apply(
+        lambda x: f"{x:,.2f}" if pd.notna(x) else None
     )
-    df_proyeccion_nat['Tasa Crecimiento Anual de la Natalidad'] = df_proyeccion_nat['Tasa Crecimiento Anual de la Natalidad'].apply(
-        lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+    df_proyeccion_nat['Tasa Crecimiento Anual de la Natalidad (%)'] = df_proyeccion_nat['Tasa Crecimiento Anual de la Natalidad (%)'].apply(
+        lambda x: f"{x:,.2f}" if pd.notna(x) else None
     )
 if mostrar_personal:
-    df_proyeccion_nat['Tasa de Natalidad PO'] = df_proyeccion_nat['Tasa de Natalidad PO'].apply(
-        lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+    df_proyeccion_nat['Tasa de Natalidad PO (%)'] = df_proyeccion_nat['Tasa de Natalidad PO (%)'].apply(
+        lambda x: f"{x:,.2f}" if pd.notna(x) else None
     )
-    df_proyeccion_nat['Tasa Crecimiento Anual de Empleos'] = df_proyeccion_nat['Tasa Crecimiento Anual de Empleos'].apply(
-        lambda x: f"{x:,.2f}%" if pd.notna(x) else None
+    df_proyeccion_nat['Tasa Crecimiento Anual de Empleos (%)'] = df_proyeccion_nat['Tasa Crecimiento Anual de Empleos (%)'].apply(
+        lambda x: f"{x:,.2f}" if pd.notna(x) else None
     )
 
 
@@ -2650,12 +2675,12 @@ if fenomeno_demografico == 'Natalidad':
                 margin={'t': 110}
             )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE NEGOCIOS</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE NEGOCIOS</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE NEGOCIOS</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE NEGOCIOS</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE NEGOCIOS</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE EMPLEOS</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE NEGOCIOS</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE EMPLEOS</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
         
@@ -2663,14 +2688,14 @@ if fenomeno_demografico == 'Natalidad':
         # 2. Gráfico de Tasas de Crecimiento   
         columnas = []
         if mostrar_unidades:
-            columnas.append('Tasa de Natalidad UE')
+            columnas.append('Tasa de Natalidad UE (%)')
         if mostrar_personal:
-            columnas.append('Tasa de Natalidad PO')
+            columnas.append('Tasa de Natalidad PO (%)')
 
         if columnas:
             fig_negocios_tasas = make_subplots()
             for i, col in enumerate(columnas):                
-                color_trazado = '#08989C' if col == 'Tasa de Natalidad UE' else '#003057'
+                color_trazado = '#08989C' if col == 'Tasa de Natalidad UE (%)' else '#003057'
                 fig_negocios_tasas.add_trace(
                     go.Scatter(
                         x=df_proyeccion_nat['Año'],
@@ -2700,7 +2725,7 @@ if fenomeno_demografico == 'Natalidad':
             xaxis_title='Año',
             margin={'t': 110}
         )
-        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE NATALIDAD</b>', title_font=dict(size=12))    
+        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE NATALIDAD</b>', title_font=dict(size=13))    
         with st.container(border=True):
             st.plotly_chart(fig_negocios_tasas, use_container_width=True)
 
@@ -2708,14 +2733,14 @@ if fenomeno_demografico == 'Natalidad':
         # 3. Gráfico de Tasas de Crecimiento
         columnas = []
         if mostrar_unidades:
-            columnas.append('Tasa Crecimiento Anual de la Natalidad')
+            columnas.append('Tasa Crecimiento Anual de la Natalidad (%)')
         if mostrar_personal:
-            columnas.append('Tasa Crecimiento Anual de Empleos')
+            columnas.append('Tasa Crecimiento Anual de Empleos (%)')
 
         if columnas:
             fig_negocios_tasas = make_subplots()
             for i, col in enumerate(columnas):                
-                color_trazado = '#08989C' if col == 'Tasa Crecimiento Anual de la Natalidad' else '#003057'
+                color_trazado = '#08989C' if col == 'Tasa Crecimiento Anual de la Natalidad (%)' else '#003057'
                 fig_negocios_tasas.add_trace(
                     go.Scatter(
                         x=df_proyeccion_nat['Año'],
@@ -2745,13 +2770,13 @@ if fenomeno_demografico == 'Natalidad':
             xaxis_title='Año',
             margin={'t': 110}
         )
-        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
         with st.container(border=True):
             st.plotly_chart(fig_negocios_tasas, use_container_width=True)
         st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
 
-#----SUPERVIVEWNCIA DE UNIDADES ECONÓMICAS Y SUPERVIVENCIA DE EMPLEOS ----
+#----SUPERVIVENCIA DE UNIDADES ECONÓMICAS Y SUPERVIVENCIA DE EMPLEOS ----
 
 if fenomeno_demografico == 'Supervivencia':
     st.markdown("---")
@@ -2763,7 +2788,7 @@ if fenomeno_demografico == 'Supervivencia':
     # Copiar tabla pivote
     df_sprv = tabla_pivote.copy()
     df_sprv.columns = [col.strip() for col in df_sprv.columns]
-
+    
     if rango_sprv == 5:
 
         # Extraer censos únicos en orden original
@@ -2799,7 +2824,7 @@ if fenomeno_demografico == 'Supervivencia':
         # Convertir a DataFrame con censos como columnas
         tabla_sprv5 = pd.DataFrame(nueva_tabla).T
         
-        st.dataframe(tabla_sprv5, use_container_width=True)   #Ocultar tabla de supervivencia
+        #st.dataframe(tabla_sprv5, use_container_width=True)   #Ocultar tabla de supervivencia
 
         #Calcular crecimiento
         filas = []
@@ -2848,9 +2873,9 @@ if fenomeno_demografico == 'Supervivencia':
 
         columnas = ['Año (t)']
         if mostrar_unidades:
-            columnas += ('Número de Nacimientos','Supervivientes después de 5 años UE','Probabilidad de Supervivencia UE', 'Tasa de Crecimiento Anual de la Supervivencia UE')    
+            columnas += ('Número de Nacimientos','Supervivientes después de 5 años UE','Probabilidad de Supervivencia UE (%)', 'Tasa de Crecimiento Anual de la Supervivencia UE (%)')    
         if mostrar_personal:
-            columnas += ('Nacimiento de Empleos','Supervivientes después de 5 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO')    
+            columnas += ('Nacimiento de Empleos','Supervivientes después de 5 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO (%)')    
 
         df_proyeccion_sprv5 = pd.DataFrame(columns=columnas)
 
@@ -2895,7 +2920,8 @@ if fenomeno_demografico == 'Supervivencia':
                     valor_actual_po *= tasa_po
                     fila['Supervivientes después de 5 años PO'] = valor_actual_po
                 df_proyeccion_sprv5.loc[len(df_proyeccion_sprv5)] = fila
- 
+
+        
        
         # --- CÁLCULO DE TASAS QUINQUENALES (Solo para UE, pero se ejecuta el bucle) ---
 
@@ -2996,7 +3022,7 @@ if fenomeno_demografico == 'Supervivencia':
                         probabilidad_ue = 1
                     else:
                         pass
-                    df_proyeccion_sprv5.loc[anio, 'Probabilidad de Supervivencia UE'] = round(probabilidad_ue, 4)
+                    df_proyeccion_sprv5.loc[anio, 'Probabilidad de Supervivencia UE (%)'] = round(probabilidad_ue, 4)
                     
 
             if mostrar_personal:
@@ -3017,14 +3043,14 @@ if fenomeno_demografico == 'Supervivencia':
                 supervivientes_anterior_ue = df_proyeccion_sprv5.loc[i - 1, 'Supervivientes después de 5 años UE']
                 if supervivientes_anterior_ue and supervivientes_anterior_ue != 0:
                     tasa_ue = ((supervivientes_actual_ue / supervivientes_anterior_ue) - 1) * 100
-                    df_proyeccion_sprv5.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE'] = round(tasa_ue, 2)
+                    df_proyeccion_sprv5.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE (%)'] = round(tasa_ue, 2)
 
             if mostrar_personal:
                 supervivientes_actual_po = df_proyeccion_sprv5.loc[i, 'Supervivientes después de 5 años PO']
                 supervivientes_anterior_po = df_proyeccion_sprv5.loc[i - 1, 'Supervivientes después de 5 años PO']
                 if supervivientes_anterior_po and supervivientes_anterior_po != 0:
                     tasa_po = ((supervivientes_actual_po / supervivientes_anterior_po) - 1) * 100
-                    df_proyeccion_sprv5.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO'] = round(tasa_po, 2)
+                    df_proyeccion_sprv5.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO (%)'] = round(tasa_po, 2)
                     
          # Añadir columna Año(-t)
         df_proyeccion_sprv5['Año(-t)'] = df_proyeccion_sprv5['Año (t)'] - 5
@@ -3127,12 +3153,12 @@ if fenomeno_demografico == 'Supervivencia':
                     margin={'t': 110}
                 )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
                     
@@ -3140,14 +3166,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 2. Gráfico               
             columnas = []
             if mostrar_unidades:
-                columnas.append('Probabilidad de Supervivencia UE')
+                columnas.append('Probabilidad de Supervivencia UE (%)')
             if mostrar_personal:
                 columnas.append('Probabilidad de Supervivencia PO')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv5['Año (t)'],
@@ -3177,7 +3203,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)
          
@@ -3185,14 +3211,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 3. Gráfico    
             columnas = []
             if mostrar_unidades:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE (%)')
             if mostrar_personal:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO (%)')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv5['Año (t)'],
@@ -3222,7 +3248,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
           
@@ -3312,9 +3338,9 @@ if fenomeno_demografico == 'Supervivencia':
 
         columnas = ['Año (t)']
         if mostrar_unidades:
-            columnas += ('Número de Nacimientos','Supervivientes después de 10 años UE','Probabilidad de Supervivencia UE', 'Tasa de Crecimiento Anual de la Supervivencia UE')    
+            columnas += ('Número de Nacimientos','Supervivientes después de 10 años UE','Probabilidad de Supervivencia UE (%)', 'Tasa de Crecimiento Anual de la Supervivencia UE (%)')    
         if mostrar_personal:
-            columnas += ('Nacimiento de Empleos','Supervivientes después de 10 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO')    
+            columnas += ('Nacimiento de Empleos','Supervivientes después de 10 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO (%)')    
 
         df_proyeccion_sprv10 = pd.DataFrame(columns=columnas)
 
@@ -3406,6 +3432,7 @@ if fenomeno_demografico == 'Supervivencia':
             else:
                 tasa_anual_promedio_ue = 1
             #st.write('Tasa_anual_promedio_ue:', tasa_anual_promedio_ue)
+           
             # Valores a la tabla 2019-2022 UE            
             valor_actual_ue = df_proyeccion_sprv10.loc[df_proyeccion_sprv10['Año (t)'] == 2018, 'Supervivientes después de 10 años UE'].iloc[0]            
             proyecciones_ue = {}
@@ -3460,7 +3487,7 @@ if fenomeno_demografico == 'Supervivencia':
                         probabilidad_ue = 1
                     else:
                         pass
-                    df_proyeccion_sprv10.loc[anio, 'Probabilidad de Supervivencia UE'] = round(probabilidad_ue, 4)
+                    df_proyeccion_sprv10.loc[anio, 'Probabilidad de Supervivencia UE (%)'] = round(probabilidad_ue, 4)
                     
 
             if mostrar_personal:
@@ -3481,14 +3508,14 @@ if fenomeno_demografico == 'Supervivencia':
                 supervivientes_anterior_ue = df_proyeccion_sprv10.loc[i - 1, 'Supervivientes después de 10 años UE']
                 if supervivientes_anterior_ue and supervivientes_anterior_ue != 0:
                     tasa_ue = ((supervivientes_actual_ue / supervivientes_anterior_ue) - 1) * 100
-                    df_proyeccion_sprv10.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE'] = round(tasa_ue, 2)
+                    df_proyeccion_sprv10.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE (%)'] = round(tasa_ue, 2)
 
             if mostrar_personal:
                 supervivientes_actual_po = df_proyeccion_sprv10.loc[i, 'Supervivientes después de 10 años PO']
                 supervivientes_anterior_po = df_proyeccion_sprv10.loc[i - 1, 'Supervivientes después de 10 años PO']
                 if supervivientes_anterior_po and supervivientes_anterior_po != 0:
                     tasa_po = ((supervivientes_actual_po / supervivientes_anterior_po) - 1) * 100
-                    df_proyeccion_sprv10.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO'] = round(tasa_po, 2)
+                    df_proyeccion_sprv10.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO (%)'] = round(tasa_po, 2)
                     
          # Añadir columna Año(-t)
         df_proyeccion_sprv10['Año(-t)'] = df_proyeccion_sprv10['Año (t)'] - 10
@@ -3594,12 +3621,12 @@ if fenomeno_demografico == 'Supervivencia':
                     margin={'t': 110}
                 )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
@@ -3607,14 +3634,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 2. Gráfico 
             columnas = []
             if mostrar_unidades:
-                columnas.append('Probabilidad de Supervivencia UE')
+                columnas.append('Probabilidad de Supervivencia UE (%)')
             if mostrar_personal:
                 columnas.append('Probabilidad de Supervivencia PO')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv10['Año (t)'],
@@ -3644,7 +3671,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
@@ -3652,14 +3679,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 3. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE (%)')
             if mostrar_personal:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO (%)')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv10['Año (t)'],
@@ -3689,7 +3716,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
           
@@ -3780,9 +3807,9 @@ if fenomeno_demografico == 'Supervivencia':
 
         columnas = ['Año (t)']
         if mostrar_unidades:
-            columnas += ('Número de Nacimientos','Supervivientes después de 15 años UE','Probabilidad de Supervivencia UE', 'Tasa de Crecimiento Anual de la Supervivencia UE')    
+            columnas += ('Número de Nacimientos','Supervivientes después de 15 años UE','Probabilidad de Supervivencia UE (%)', 'Tasa de Crecimiento Anual de la Supervivencia UE (%)')    
         if mostrar_personal:
-            columnas += ('Nacimiento de Empleos','Supervivientes después de 15 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO')    
+            columnas += ('Nacimiento de Empleos','Supervivientes después de 15 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO (%)')    
 
         df_proyeccion_sprv15 = pd.DataFrame(columns=columnas)
 
@@ -3928,7 +3955,7 @@ if fenomeno_demografico == 'Supervivencia':
                         probabilidad_ue = 1
                     else:
                         pass
-                    df_proyeccion_sprv15.loc[anio, 'Probabilidad de Supervivencia UE'] = round(probabilidad_ue, 4)
+                    df_proyeccion_sprv15.loc[anio, 'Probabilidad de Supervivencia UE (%)'] = round(probabilidad_ue, 4)
                     
 
             if mostrar_personal:
@@ -3949,14 +3976,14 @@ if fenomeno_demografico == 'Supervivencia':
                 supervivientes_anterior_ue = df_proyeccion_sprv15.loc[i - 1, 'Supervivientes después de 15 años UE']
                 if supervivientes_anterior_ue and supervivientes_anterior_ue != 0:
                     tasa_ue = ((supervivientes_actual_ue / supervivientes_anterior_ue) - 1) * 100
-                    df_proyeccion_sprv15.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE'] = round(tasa_ue, 2)
+                    df_proyeccion_sprv15.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE (%)'] = round(tasa_ue, 2)
 
             if mostrar_personal:
                 supervivientes_actual_po = df_proyeccion_sprv15.loc[i, 'Supervivientes después de 15 años PO']
                 supervivientes_anterior_po = df_proyeccion_sprv15.loc[i - 1, 'Supervivientes después de 15 años PO']
                 if supervivientes_anterior_po and supervivientes_anterior_po != 0:
                     tasa_po = ((supervivientes_actual_po / supervivientes_anterior_po) - 1) * 100
-                    df_proyeccion_sprv15.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO'] = round(tasa_po, 2)
+                    df_proyeccion_sprv15.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO (%)'] = round(tasa_po, 2)
                     
          # Añadir columna Año(-t)
         df_proyeccion_sprv15['Año(-t)'] = df_proyeccion_sprv15['Año (t)'] - 15
@@ -4061,12 +4088,12 @@ if fenomeno_demografico == 'Supervivencia':
                     margin={'t': 110}
                 )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
@@ -4074,14 +4101,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 2. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Probabilidad de Supervivencia UE')
+                columnas.append('Probabilidad de Supervivencia UE (%)')
             if mostrar_personal:
                 columnas.append('Probabilidad de Supervivencia PO')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv15['Año (t)'],
@@ -4111,7 +4138,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
@@ -4119,14 +4146,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 3. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE (%)')
             if mostrar_personal:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO (%)')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv15['Año (t)'],
@@ -4156,7 +4183,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
           
@@ -4246,9 +4273,9 @@ if fenomeno_demografico == 'Supervivencia':
 
         columnas = ['Año (t)']
         if mostrar_unidades:
-            columnas += ('Número de Nacimientos','Supervivientes después de 20 años UE','Probabilidad de Supervivencia UE', 'Tasa de Crecimiento Anual de la Supervivencia UE')    
+            columnas += ('Número de Nacimientos','Supervivientes después de 20 años UE','Probabilidad de Supervivencia UE (%)', 'Tasa de Crecimiento Anual de la Supervivencia UE (%)')    
         if mostrar_personal:
-            columnas += ('Nacimiento de Empleos','Supervivientes después de 20 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO')    
+            columnas += ('Nacimiento de Empleos','Supervivientes después de 20 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO (%)')    
 
         df_proyeccion_sprv20 = pd.DataFrame(columns=columnas)
 
@@ -4394,7 +4421,7 @@ if fenomeno_demografico == 'Supervivencia':
                         probabilidad_ue = 1
                     else:
                         pass
-                    df_proyeccion_sprv20.loc[anio, 'Probabilidad de Supervivencia UE'] = round(probabilidad_ue, 4)
+                    df_proyeccion_sprv20.loc[anio, 'Probabilidad de Supervivencia UE (%)'] = round(probabilidad_ue, 4)
                     
 
             if mostrar_personal:
@@ -4415,14 +4442,14 @@ if fenomeno_demografico == 'Supervivencia':
                 supervivientes_anterior_ue = df_proyeccion_sprv20.loc[i - 1, 'Supervivientes después de 20 años UE']
                 if supervivientes_anterior_ue and supervivientes_anterior_ue != 0:
                     tasa_ue = ((supervivientes_actual_ue / supervivientes_anterior_ue) - 1) * 100
-                    df_proyeccion_sprv20.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE'] = round(tasa_ue, 2)
+                    df_proyeccion_sprv20.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE (%)'] = round(tasa_ue, 2)
 
             if mostrar_personal:
                 supervivientes_actual_po = df_proyeccion_sprv20.loc[i, 'Supervivientes después de 20 años PO']
                 supervivientes_anterior_po = df_proyeccion_sprv20.loc[i - 1, 'Supervivientes después de 20 años PO']
                 if supervivientes_anterior_po and supervivientes_anterior_po != 0:
                     tasa_po = ((supervivientes_actual_po / supervivientes_anterior_po) - 1) * 100
-                    df_proyeccion_sprv20.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO'] = round(tasa_po, 2)
+                    df_proyeccion_sprv20.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO (%)'] = round(tasa_po, 2)
                     
          # Añadir columna Año(-t)
         df_proyeccion_sprv20['Año(-t)'] = df_proyeccion_sprv20['Año (t)'] - 20
@@ -4527,12 +4554,12 @@ if fenomeno_demografico == 'Supervivencia':
                     margin={'t': 110}
                 )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
@@ -4540,14 +4567,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 2. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Probabilidad de Supervivencia UE')
+                columnas.append('Probabilidad de Supervivencia UE (%)')
             if mostrar_personal:
                 columnas.append('Probabilidad de Supervivencia PO')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv20['Año (t)'],
@@ -4577,7 +4604,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
@@ -4585,14 +4612,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 3. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE (%)')
             if mostrar_personal:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO (%)')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv20['Año (t)'],
@@ -4622,7 +4649,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
           
@@ -4712,9 +4739,9 @@ if fenomeno_demografico == 'Supervivencia':
 
         columnas = ['Año (t)']
         if mostrar_unidades:
-            columnas += ('Número de Nacimientos','Supervivientes después de 25 años UE','Probabilidad de Supervivencia UE', 'Tasa de Crecimiento Anual de la Supervivencia UE')    
+            columnas += ('Número de Nacimientos','Supervivientes después de 25 años UE','Probabilidad de Supervivencia UE (%)', 'Tasa de Crecimiento Anual de la Supervivencia UE (%)')    
         if mostrar_personal:
-            columnas += ('Nacimiento de Empleos','Supervivientes después de 25 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO')    
+            columnas += ('Nacimiento de Empleos','Supervivientes después de 25 años PO','Probabilidad de Supervivencia PO', 'Tasa de Crecimiento Anual de la Supervivencia PO (%)')    
 
         df_proyeccion_sprv25 = pd.DataFrame(columns=columnas)
 
@@ -4806,6 +4833,7 @@ if fenomeno_demografico == 'Supervivencia':
             else:
                 tasa_anual_promedio_ue = 1
             #st.write('Tasa_anual_promedio_ue:', tasa_anual_promedio_ue)
+            
             # Valores a la tabla 2019-2022 UE            
             valor_actual_ue = df_proyeccion_sprv25.loc[df_proyeccion_sprv25['Año (t)'] == 2018, 'Supervivientes después de 25 años UE'].iloc[0]            
             proyecciones_ue = {}
@@ -4860,7 +4888,7 @@ if fenomeno_demografico == 'Supervivencia':
                         probabilidad_ue = 1
                     else:
                         pass
-                    df_proyeccion_sprv25.loc[anio, 'Probabilidad de Supervivencia UE'] = round(probabilidad_ue, 4)
+                    df_proyeccion_sprv25.loc[anio, 'Probabilidad de Supervivencia UE (%)'] = round(probabilidad_ue, 4)
                     
 
             if mostrar_personal:
@@ -4881,14 +4909,14 @@ if fenomeno_demografico == 'Supervivencia':
                 supervivientes_anterior_ue = df_proyeccion_sprv25.loc[i - 1, 'Supervivientes después de 25 años UE']
                 if supervivientes_anterior_ue and supervivientes_anterior_ue != 0:
                     tasa_ue = ((supervivientes_actual_ue / supervivientes_anterior_ue) - 1) * 100
-                    df_proyeccion_sprv25.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE'] = round(tasa_ue, 2)
+                    df_proyeccion_sprv25.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia UE (%)'] = round(tasa_ue, 2)
 
             if mostrar_personal:
                 supervivientes_actual_po = df_proyeccion_sprv25.loc[i, 'Supervivientes después de 25 años PO']
                 supervivientes_anterior_po = df_proyeccion_sprv25.loc[i - 1, 'Supervivientes después de 25 años PO']
                 if supervivientes_anterior_po and supervivientes_anterior_po != 0:
                     tasa_po = ((supervivientes_actual_po / supervivientes_anterior_po) - 1) * 100
-                    df_proyeccion_sprv25.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO'] = round(tasa_po, 2)
+                    df_proyeccion_sprv25.loc[i, 'Tasa de Crecimiento Anual de la Supervivencia PO (%)'] = round(tasa_po, 2)
                     
          # Añadir columna Año(-t)
         df_proyeccion_sprv25['Año(-t)'] = df_proyeccion_sprv25['Año (t)'] - 25
@@ -4993,12 +5021,12 @@ if fenomeno_demografico == 'Supervivencia':
                     margin={'t': 110}
                 )
             if mostrar_unidades:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=False)
             if mostrar_unidades and mostrar_personal:
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=12), secondary_y=False)
-                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=12), secondary_y=True)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES UE</b>', title_font=dict(size=13), secondary_y=False)
+                fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
@@ -5006,14 +5034,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 2. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Probabilidad de Supervivencia UE')
+                columnas.append('Probabilidad de Supervivencia UE (%)')
             if mostrar_personal:
                 columnas.append('Probabilidad de Supervivencia PO')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Probabilidad de Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv25['Año (t)'],
@@ -5043,7 +5071,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
@@ -5051,14 +5079,14 @@ if fenomeno_demografico == 'Supervivencia':
             # 3. Gráfico
             columnas = []
             if mostrar_unidades:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia UE (%)')
             if mostrar_personal:
-                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO')
+                columnas.append('Tasa de Crecimiento Anual de la Supervivencia PO (%)')
 
             if columnas:
                 fig_negocios_tasas = make_subplots()
                 for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE' else '#003057'
+                    color_trazado = '#08989C' if col == 'Tasa de Crecimiento Anual de la Supervivencia UE (%)' else '#003057'
                     fig_negocios_tasas.add_trace(
                         go.Scatter(
                             x=df_proyeccion_sprv25['Año (t)'],
@@ -5088,7 +5116,7 @@ if fenomeno_demografico == 'Supervivencia':
                 xaxis_title = 'Año (t)',
                 margin={'t': 110}
             )
-            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=12))    
+            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
           
@@ -5101,5 +5129,863 @@ if fenomeno_demografico == 'Mortalidad':
     st.markdown("---")
     st.subheader("Mortalidad")
     st.markdown('---')
-    st.info("La funcionalidad de Mortalidad está en desarrollo y estará disponible próximamente.")
+    
+    if mostrar_unidades:
+        df_activos = df_proyeccion[['Año', 'Número de Negocios']].iloc[5:].copy()
+        df_activos_completo = df_proyeccion[['Año', 'Número de Negocios']].copy()
+        df_activos.reset_index(drop=True, inplace=True)
+        
+    if mostrar_personal:
+        df_activos = df_proyeccion[['Año', 'Personal Ocupado']].iloc[5:].copy()
+        df_activos_completo = df_proyeccion[['Año', 'Personal Ocupado']].copy()
+        df_activos.reset_index(drop=True, inplace=True)
 
+    if mostrar_unidades and mostrar_personal:
+        df_activos = df_proyeccion[['Año', 'Número de Negocios', 'Personal Ocupado']].iloc[5:].copy()
+        df_activos_completo = df_proyeccion[['Año', 'Número de Negocios', 'Personal Ocupado']].copy()
+        df_activos.reset_index(drop=True, inplace=True)
+    
+
+    #st.dataframe(df_activos_completo)
+    #st.dataframe(df_activos)
+
+
+    df_mrt = tabla_pivote.copy()
+           
+    df_mrt.columns = [col.strip() for col in df_mrt.columns]
+    
+    # Extraer censos únicos en orden original
+    censos_unicos = []
+    for col in df_mrt.columns:
+        if col.startswith('CE'):
+            partes = col.split(' - ')
+            if len(partes) > 0:
+                censo = partes[0]
+                try:
+                    anio_censo = int(censo.replace('CE ', ''))
+                    if anio_censo >= 1993 and censo not in censos_unicos:  # Filtrar censos desde 1993 en adelante                
+                        censos_unicos.append(censo)
+                except ValueError:
+                    continue  # Saltar si no se puede convertir a entero
+    
+    # Crear estructura para la nueva tabla
+    nueva_tabla = {'UE': {}, 'PO': {}}
+    
+    for i, censo in enumerate(censos_unicos):
+        limite_superior = ((i + 1) * 5)+1   # 5, 10, 15, 20...
+        columnas_censo = [col for col in df_mrt.columns if col.startswith(censo)]
+    
+        # Inicializar valores
+        suma_ue = 0
+        suma_po = 0
+
+        for col in columnas_censo:
+            segmento_filas = df_mrt[col].iloc[0 : limite_superior]
+            if 'UE' in col.upper():
+                suma_ue = segmento_filas.sum()
+            elif 'PO' in col.upper():
+                suma_po = segmento_filas.sum()
+        nueva_tabla['UE'][censo] = suma_ue
+        nueva_tabla['PO'][censo] = suma_po
+    
+    # Convertir a DataFrame con censos como columnas
+    tabla_sprv_t = pd.DataFrame(nueva_tabla).T
+    #st.write('tabla_sprv_t')
+    #st.dataframe(tabla_sprv_t, use_container_width=True)
+
+
+    #Calcular crecimiento
+    filas = []
+    nombres_filas = []
+    etiquetas = []
+
+    # Función para calcular crecimiento porcentual entre censos
+    def calcular_crecimiento_sprv_t(valores):
+        resultados = []
+        for i in range(1, len(valores)):
+            anterior = valores[i - 1]
+            actual = valores[i]
+            if anterior and actual and anterior != '' and actual != '':
+                anterior_num = float(str(anterior).replace(',', ''))
+                actual_num = float(str(actual).replace(',', ''))
+                if anterior_num > 0:
+                    crecimiento = ((actual_num) / anterior_num) ** 0.2
+                    resultados.append(crecimiento)
+                else:
+                    resultados.append(None)
+            else:
+                resultados.append(None)
+        return resultados
+
+    # Etiquetas para columnas (pares de censos)
+    etiquetas = [f"{tabla_sprv_t.columns[i-1]}-{tabla_sprv_t.columns[i]}" for i in range(1, len(tabla_sprv_t.columns))]
+
+    # Calcular según selección
+    if mostrar_unidades:
+        valores_ue = tabla_sprv_t.loc['UE'].tolist()
+        filas.append(calcular_crecimiento_sprv_t(valores_ue))
+        nombres_filas.append("Unidades Económicas")
+
+    if mostrar_personal:
+        valores_po = tabla_sprv_t.loc['PO'].tolist()
+        filas.append(calcular_crecimiento_sprv_t(valores_po))
+        nombres_filas.append("Personal Ocupado")
+
+    # Mostrar tabla combinada
+    if filas:
+        df_crecimiento_sprv_t = pd.DataFrame(filas, columns=etiquetas, index=nombres_filas)
+        #st.write('df_crecimiento_sprv_t')
+        #st.dataframe(df_crecimiento_sprv_t, use_container_width=True)
+    else:
+        st.info("Selecciona al menos una métrica para calcular el índice de crecimiento.")
+
+
+   
+    # Calculo de número de muertos x≥0
+    resultados_finales = {'UE': {}, 'PO': {}}
+
+    for i, censo in enumerate(tabla_sprv_t.columns):
+        idx_fila = i * 5
+        if mostrar_unidades:
+            if idx_fila < len(df_activos_completo):
+                val_activos_ue = df_activos_completo.iloc[idx_fila, 1]
+                val_mrt_ue = tabla_sprv_t.iloc[0, i]
+                resultados_finales['UE'][censo] = val_activos_ue - val_mrt_ue
+                if resultados_finales['UE'][censo] < 0:
+                    resultados_finales['UE'][censo] = 0
+        
+        if mostrar_personal:
+            if idx_fila < len(df_activos_completo):
+                val_activos_po = df_activos_completo.iloc[idx_fila, 1]
+                val_mrt_po = tabla_sprv_t.iloc[1, i]
+                resultados_finales['PO'][censo] = val_activos_po - val_mrt_po
+                if resultados_finales['PO'][censo] < 0:
+                    resultados_finales['PO'][censo] = 0
+
+        if mostrar_unidades and mostrar_personal:
+            if idx_fila < len(df_activos_completo):
+                val_activos_ue = df_activos_completo.iloc[idx_fila, 1]
+                val_mrt_ue = tabla_sprv_t.iloc[0, i]
+                resultados_finales['UE'][censo] = val_activos_ue - val_mrt_ue
+                if resultados_finales['UE'][censo] < 0:
+                    resultados_finales['UE'][censo] = 0
+
+                val_activos_po = df_activos_completo.iloc[idx_fila, 2]
+                val_mrt_po = tabla_sprv_t.iloc[1, i]
+                resultados_finales['PO'][censo] = val_activos_po - val_mrt_po
+                if resultados_finales['PO'][censo] < 0:
+                    resultados_finales['PO'][censo] = 0
+
+
+    tabla_mrt = pd.DataFrame(resultados_finales).T
+    #st.write('tabla_mrt')
+    #st.dataframe(tabla_mrt, use_container_width=True)
+
+
+    #Calcular crecimiento
+    filas = []
+    nombres_filas = []
+    etiquetas = []
+
+    # Función para calcular crecimiento porcentual entre censos
+    def df_crecimiento_mrt(valores):
+        resultados = []
+        for i in range(1, len(valores)):
+            anterior = valores[i - 1]
+            actual = valores[i]
+            if anterior and actual and anterior != '' and actual != '':
+                anterior_num = float(str(anterior).replace(',', ''))
+                actual_num = float(str(actual).replace(',', ''))
+                if anterior_num > 0:
+                    crecimiento = ((actual_num) / anterior_num) ** 0.2
+                    resultados.append(crecimiento)
+                else:
+                    resultados.append(None)
+            else:
+                resultados.append(None)
+        return resultados
+
+    # Etiquetas para columnas (pares de censos)
+    etiquetas = [f"{tabla_mrt.columns[i-1]}-{tabla_mrt.columns[i]}" for i in range(1, len(tabla_mrt.columns))]
+
+    # Calcular según selección
+    if mostrar_unidades:
+        valores_ue = tabla_mrt.loc['UE'].tolist()
+        filas.append(df_crecimiento_mrt(valores_ue))
+        nombres_filas.append("Unidades Económicas")
+
+    if mostrar_personal:
+        valores_po = tabla_mrt.loc['PO'].tolist()
+        filas.append(df_crecimiento_mrt(valores_po))
+        nombres_filas.append("Personal Ocupado")
+
+    # Mostrar tabla combinada
+    #st.write('df_crecimiento_mrt')
+    if filas:
+        df_crecimiento_mrt = pd.DataFrame(filas, columns=etiquetas, index=nombres_filas)
+        #st.dataframe(df_crecimiento_mrt, use_container_width=True)
+    else:
+        st.info("Selecciona al menos una métrica para calcular el índice de crecimiento.")
+
+    
+    # TABLA DE PROYECCION DE MORTALIDAD
+    
+    columnas = ['Año']
+    if mostrar_unidades:
+        columnas += ['Activos', 'Sobrevivientes ≥5 en el año t', 'Número de negocios muertos x≥0','Tasa de mortalidad (%)','Tasa de crecimiento anual de la mortalidad (%)']
+    if mostrar_personal:
+        columnas += ['Empleos activos', 'Empleos sobrevivientes ≥5 en el año t', 'Número de empleos muertos x≥0','Tasa de mortalidad de los empleos (%)','Tasa de crecimiento anual de la mortalidad de los empleos (%)']
+
+    
+
+    df_proyeccion_mrt = pd.DataFrame()
+
+    for i in range(len(df_crecimiento_sprv_t.columns)):
+        periodo = df_crecimiento_sprv_t.columns[i]
+        partes = periodo.split('-')
+
+        anio_inicio_completo = partes[0].strip()
+        anio_fin_completo = partes[1].strip()
+
+        anio_inicio_str = anio_inicio_completo.replace('CE', '')
+        anio_fin_str = anio_fin_completo.replace('CE', '')
+        
+        anio_inicio = int(anio_inicio_str)
+        anio_fin = int(anio_fin_str)
+
+        etiqueta_columna = f'CE {anio_inicio}'
+
+        if mostrar_unidades:
+            valor_actual_ue = float(tabla_sprv_t.loc['UE', etiqueta_columna])
+            tasa_ue = float(df_crecimiento_sprv_t.loc['Unidades Económicas', periodo])
+            df_proyeccion_mrt.loc[anio_inicio, 'Sobrevivientes ≥5 en el año t'] = valor_actual_ue
+
+        if mostrar_personal:
+            valor_actual_po = float(tabla_sprv_t.loc['PO', etiqueta_columna])
+            tasa_po = float(df_crecimiento_sprv_t.loc['Personal Ocupado', periodo])
+            df_proyeccion_mrt.loc[anio_inicio, 'Empleos sobrevivientes ≥5 en el año t'] = valor_actual_po        
+
+
+        for anio in range(anio_inicio + 1, anio_fin):
+            if anio_fin > 2019:
+                break  # No proyectar internamente en este periodo
+
+            if mostrar_unidades:
+                valor_actual_ue *= tasa_ue
+                df_proyeccion_mrt.loc[anio, 'Sobrevivientes ≥5 en el año t'] = valor_actual_ue
+
+            if mostrar_personal:
+                valor_actual_po *= tasa_po
+                df_proyeccion_mrt.loc[anio, 'Empleos sobrevivientes ≥5 en el año t'] = valor_actual_po
+
+    # 2.2) CÁLCULO DE TASAS QUINQUENALES (UE) y proyección a 2019
+    valor_2019_proyectado_ue = None
+    valor_2019_proyectado_po = None
+
+    if mostrar_unidades:
+        tasas_quinquenales_ue = []
+        for i in range(len(tabla_sprv_t.columns) - 1):
+            censo_actual_str = tabla_sprv_t.columns[i]
+            censo_siguiente_str = tabla_sprv_t.columns[i + 1]
+
+            try:
+                anio_siguiente = int(censo_siguiente_str.replace('CE ', ''))
+            except Exception:
+                anio_siguiente = 9999
+
+            if anio_siguiente > 2023:
+                break
+
+            valor_actual_ue = float(tabla_sprv_t.loc['UE', censo_actual_str])
+            valor_siguiente_ue = float(tabla_sprv_t.loc['UE', censo_siguiente_str])
+
+            if valor_actual_ue > 0:
+                tasa_quinquenal_ue = (valor_siguiente_ue / valor_actual_ue)
+                tasas_quinquenales_ue.append(tasa_quinquenal_ue)
+
+        if tasas_quinquenales_ue:
+            promedio_quinquenal_ue = sum(tasas_quinquenales_ue) / len(tasas_quinquenales_ue)
+            tasa_anual_promedio_ue = promedio_quinquenal_ue ** (1/5)
+        else:
+            tasa_anual_promedio_ue = 1.0
+
+        # Buscar el valor 2018 sobrevivientes UE
+        try:
+            valor_2018_ue = df_proyeccion_mrt.loc[2018, 'Sobrevivientes ≥5 en el año t']
+        except KeyError:
+            st.warning("No se encontró el año 2018 en 'Sobrevivientes ≥5 en el año t'. Verifica el armado previo.")
+            valor_2018_ue = None
+
+        if valor_2018_ue is not None:
+            valor_2019_proyectado_ue = float(valor_2018_ue) * float(tasa_anual_promedio_ue)
+
+    # 2.3) PROYECCIÓN PO 2019 con tasa IMSS
+    if mostrar_personal:
+        try:
+            tasa_imss_2019 = float(tasas_imss['Tasas'][0])  # ej. [1.0184, 0.9681, 1.0558, 1.0319]
+        except Exception:
+            st.error("No se pudo leer 'tasa_imss_2019' de tasas_imss['Tasas'][0].")
+            tasa_imss_2019 = None
+
+        try:
+            valor_2018_po = df_proyeccion_mrt.loc[2018, 'Empleos sobrevivientes ≥5 en el año t']
+        except KeyError:
+            st.warning("No se encontró el año 2018 en 'Empleos sobrevivientes ≥5 en el año t'. Verifica el armado previo.")
+            valor_2018_po = None
+
+        if tasa_imss_2019 is not None and valor_2018_po is not None:
+            valor_2019_proyectado_po = float(valor_2018_po) * float(tasa_imss_2019)
+
+    # Añadir fila 2019 (escribiendo por índice)
+    if valor_2019_proyectado_ue is not None:
+        df_proyeccion_mrt.loc[2019, 'Sobrevivientes ≥5 en el año t'] = valor_2019_proyectado_ue
+
+    if valor_2019_proyectado_po is not None:
+        df_proyeccion_mrt.loc[2019, 'Empleos sobrevivientes ≥5 en el año t'] = valor_2019_proyectado_po
+
+   
+    # PROBABILIDADES 2020–2022 (UE) y Tasas IMSS 2020–2022 (PO)
+   
+    if mostrar_unidades:
+        df_probabilidades = cargar_probabilidades()
+        if df_probabilidades.empty:
+            st.stop()
+
+        # Normalizar filtros
+        sector_filtrado_prob = sector.upper().strip()
+        if sector_filtrado_prob == 'SERVICIOS PRIVADOS NO FINANCIEROS':
+            sector_filtrado_prob = 'SERVICIOS PRIVADOS NO FINANCIEROS'
+
+        # Obtener base 2019 UE
+        try:
+            valor_base_ue = df_proyeccion_mrt.loc[2019, 'Sobrevivientes ≥5 en el año t']
+        except KeyError:
+            valor_base_ue = None
+            st.warning("No hay valor 2019 para UE. Se omite proyección 2020–2022 de UE.")
+
+        if valor_base_ue is not None:
+            proyected_value_ue = float(valor_base_ue)
+            for anio_futuro in range(2020, 2023):
+                try:
+                    tasas = df_probabilidades[
+                        (df_probabilidades['ENTIDAD'] == entidad.upper()) &
+                        (df_probabilidades['SECTOR'] == sector_filtrado_prob) &
+                        (df_probabilidades['TAMAÑO'] == personal_seleccionado) &
+                        (df_probabilidades['AÑO'] == anio_futuro)
+                    ]
+                    if not tasas.empty:
+                        tasa_supervivencia = float(tasas['SOBREVIVIENTES'].iloc[0])
+                        proyected_value_ue *= tasa_supervivencia
+                        df_proyeccion_mrt.loc[anio_futuro, 'Sobrevivientes ≥5 en el año t'] = proyected_value_ue
+                    else:
+                        st.warning(f"No hay probabilidades para {entidad}, {sector}, {personal_seleccionado}, {anio_futuro}.")
+                except Exception as e:
+                    st.error(f"Error al obtener tasas para {anio_futuro}: {e}")
+
+    # PO 2020–2022 por IMSS
+    if mostrar_personal:
+        try:
+            valor_base_po = df_proyeccion_mrt.loc[2019, 'Empleos sobrevivientes ≥5 en el año t']
+        except KeyError:
+            valor_base_po = None
+            st.warning("No hay valor 2019 para PO. Se omite proyección 2020–2022 de PO.")
+
+        if valor_base_po is not None:
+            proyected_value_po = float(valor_base_po)
+            # esperamos tasas_imss['Tasas'][1:4]
+            try:
+                tasas_2020_2022 = [
+                    float(tasas_imss['Tasas'][1]),
+                    float(tasas_imss['Tasas'][2]),
+                    float(tasas_imss['Tasas'][3]),
+                ]
+            except Exception:
+                st.error("No se pudieron leer tasas IMSS 2020–2022 de 'tasas_imss['Tasas']'.")
+                tasas_2020_2022 = None
+
+            if tasas_2020_2022:
+                for offset, anio in enumerate(range(2020, 2023)):
+                    proyected_value_po *= tasas_2020_2022[offset]
+                    df_proyeccion_mrt.loc[anio, 'Empleos sobrevivientes ≥5 en el año t'] = proyected_value_po
+
+    
+    # Añadir 2023 desde tabla_sprv_t
+    
+    if mostrar_unidades:
+        try:
+            df_proyeccion_mrt.loc[2023, 'Sobrevivientes ≥5 en el año t'] = float(tabla_sprv_t.loc['UE', 'CE 2023'])
+        except Exception:
+            st.warning("No se pudo asignar UE 2023 desde 'tabla_sprv_t'.")
+
+    if mostrar_personal:
+        try:
+            df_proyeccion_mrt.loc[2023, 'Empleos sobrevivientes ≥5 en el año t'] = float(tabla_sprv_t.loc['PO', 'CE 2023'])
+        except Exception:
+            st.warning("No se pudo asignar PO 2023 desde 'tabla_sprv_t'.")
+
+   
+    # ACTIVOS y EMPLEOS ACTIVOS (mapeo por Año, no por índice posicional)
+   
+    def _map_by_year(df_base, df_origen, col_origen, col_destino):
+        """Mapea col_origen de df_origen -> df_base[col_destino] por Año."""
+        if 'Año' in df_origen.columns:
+            serie_origen = df_origen.set_index('Año')[col_origen]
+        else:
+            # Si df_activos ya trae el índice por Año
+            serie_origen = df_origen[col_origen]
+            serie_origen.index = serie_origen.index.astype(int)
+        df_base[col_destino] = df_base.index.map(serie_origen)
+
+    if mostrar_unidades:
+        try:
+            _map_by_year(df_proyeccion_mrt, df_activos, 'Número de Negocios', 'Activos')
+        except Exception as e:
+            st.warning(f"No se pudo mapear 'Activos' desde df_activos: {e}")
+
+    if mostrar_personal:
+        try:
+            _map_by_year(df_proyeccion_mrt, df_activos, 'Personal Ocupado', 'Empleos activos')
+        except Exception as e:
+            st.warning(f"No se pudo mapear 'Empleos activos' desde df_activos: {e}")
+
+
+    # MUERTOS (UE/PO) hasta 2019 — 
+
+    for i in range(len(df_crecimiento_mrt.columns)):
+        periodo = df_crecimiento_mrt.columns[i]
+        partes = periodo.split('-')
+
+        anio_inicio_completo = partes[0].strip()
+        anio_fin_completo = partes[1].strip()
+
+        anio_inicio_str = anio_inicio_completo.replace('CE', '')
+        anio_fin_str = anio_fin_completo.replace('CE', '')
+        
+        anio_inicio = int(anio_inicio_str)
+        anio_fin = int(anio_fin_str)
+
+        etiqueta_columna = f'CE {anio_inicio}'
+
+        
+        if mostrar_unidades:
+            valor_actual_ue = float(tabla_mrt.loc['UE', etiqueta_columna])
+            tasa_ue = df_crecimiento_mrt.loc['Unidades Económicas', periodo]
+            tasa_ue = 0 if pd.isna(tasa_ue) else float(tasa_ue)
+            df_proyeccion_mrt.loc[anio_inicio, 'Número de negocios muertos x≥0'] = valor_actual_ue
+
+        if mostrar_personal:
+            valor_actual_po = float(tabla_mrt.loc['PO', etiqueta_columna])
+            tasa_po = df_crecimiento_mrt.loc['Personal Ocupado', periodo]
+            tasa_po = 0 if pd.isna(tasa_po) else float(tasa_po)
+            df_proyeccion_mrt.loc[anio_inicio, 'Número de empleos muertos x≥0'] = valor_actual_po
+        
+
+        # Intermedio (sin pasar de 2019 en este tramo)
+        for anio in range(anio_inicio + 1, anio_fin):
+            if anio_fin > 2019:
+                break  # 2019 o superiores se manejan fuera (o no se proyectan aquí)
+
+            base_activos = (df_activos_completo.set_index('Año')
+                            if 'Año' in df_activos_completo.columns
+                            else df_activos_completo)
+
+            if mostrar_unidades:
+                if tasa_ue == 0:
+                    
+                    activos_5 = (float(base_activos.loc[anio - 5, 'Número de Negocios'])
+                                if (anio - 5) in base_activos.index else np.nan)
+                    
+                    sobrev = (float(df_proyeccion_mrt.loc[anio, 'Sobrevivientes ≥5 en el año t'])
+                            if ('Sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
+                            else np.nan)
+
+                    
+                    if pd.isna(activos_5) or pd.isna(sobrev):
+                        valor_actual_ue = np.nan
+                    else:
+                        valor_actual_ue = activos_5 - sobrev
+                        if valor_actual_ue < 0:
+                            valor_actual_ue = 0.0
+                else:
+                    valor_actual_ue *= tasa_ue
+
+                df_proyeccion_mrt.loc[anio, 'Número de negocios muertos x≥0'] = valor_actual_ue
+
+            
+            if mostrar_personal:
+                if tasa_po == 0:
+                    empleos_activos_5 = (float(base_activos.loc[anio - 5, 'Personal Ocupado'])
+                                        if (anio - 5) in base_activos.index else np.nan)
+                    sobrev_po = (float(df_proyeccion_mrt.loc[anio, 'Empleos sobrevivientes ≥5 en el año t'])
+                                if ('Empleos sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
+                                else np.nan)
+
+                    if pd.isna(empleos_activos_5) or pd.isna(sobrev_po):
+                        valor_actual_po = np.nan
+                    else:
+                        valor_actual_po = empleos_activos_5 - sobrev_po
+                        if valor_actual_po < 0:
+                            valor_actual_po = 0.0
+                else:
+                    valor_actual_po *= tasa_po
+
+                df_proyeccion_mrt.loc[anio, 'Número de empleos muertos x≥0'] = valor_actual_po
+
+        
+        base_activos = (df_activos_completo.set_index('Año')
+                            if 'Año' in df_activos_completo.columns
+                            else df_activos_completo)
+
+        for anio in range(2019, 2023):
+            if mostrar_unidades:
+                activos_1 = (float(base_activos.loc[anio - 1, 'Número de Negocios'])
+                            if (anio - 1) in base_activos.index else np.nan)
+                
+                sobrev = (float(df_proyeccion_mrt.loc[anio, 'Sobrevivientes ≥5 en el año t'])
+                        if ('Sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
+                        else np.nan)
+                if pd.isna(activos_1) or pd.isna(sobrev):
+                    valor_actual_ue = np.nan
+                else:
+                    valor_actual_ue = activos_1 - sobrev
+                    if valor_actual_ue < 0:
+                        valor_actual_ue = 0.0
+                df_proyeccion_mrt.loc[anio, 'Número de negocios muertos x≥0'] = valor_actual_ue
+
+            if mostrar_personal:
+                empleos_activos_1 = (float(base_activos.loc[anio - 1, 'Personal Ocupado'])
+                                    if (anio - 1) in base_activos.index else np.nan)
+                sobrev_po = (float(df_proyeccion_mrt.loc[anio, 'Empleos sobrevivientes ≥5 en el año t'])
+                            if ('Empleos sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
+                            else np.nan)
+
+                if pd.isna(empleos_activos_1) or pd.isna(sobrev_po):
+                    valor_actual_po = np.nan
+                else:
+                    valor_actual_po = empleos_activos_1 - sobrev_po
+                    if valor_actual_po < 0:
+                        valor_actual_po = 0.0
+                df_proyeccion_mrt.loc[anio, 'Número de empleos muertos x≥0'] = valor_actual_po
+
+    # Añadir 2023 muertos desde tabla_mrt
+    if mostrar_unidades:
+        try:
+            df_proyeccion_mrt.loc[2023, 'Número de negocios muertos x≥0'] = float(
+                tabla_mrt.loc['UE', 'CE 2023']
+            )
+        except Exception as e:
+            st.warning(f"No se pudo asignar UE muertos 2023 desde 'tabla_mrt': {e}")
+
+    if mostrar_personal:
+        try:
+            df_proyeccion_mrt.loc[2023, 'Número de empleos muertos x≥0'] = float(
+                tabla_mrt.loc['PO', 'CE 2023']
+            )
+        except Exception as e:
+            st.warning(f"No se pudo asignar PO muertos 2023 desde 'tabla_mrt': {e}")
+
+
+
+    # --- CÁLCULO DE TASAS DE MORTALIDAD (%) ---    
+    
+    # Asegura índice Año
+    if 'Año' in df_proyeccion_mrt.columns and df_proyeccion_mrt.index.name != 'Año':
+        df_proyeccion_mrt = df_proyeccion_mrt.set_index('Año')
+
+    for anio in df_proyeccion_mrt.index:
+        if mostrar_unidades and 'Número de negocios muertos x≥0' in df_proyeccion_mrt.columns:
+            s_activos = df_activos_completo.set_index('Año')['Número de Negocios']
+            muertos_ue = df_proyeccion_mrt.at[anio, 'Número de negocios muertos x≥0']
+            activos = s_activos.get(anio-1, np.nan)
+            if pd.notna(muertos_ue) and pd.notna(activos) and activos > 0:
+                df_proyeccion_mrt.at[anio, 'Tasa de mortalidad (%)'] = round((muertos_ue / activos) * 100, 2)
+
+        if mostrar_personal and 'Número de empleos muertos x≥0' in df_proyeccion_mrt.columns:
+            s_empleos = df_activos_completo.set_index('Año')['Personal Ocupado']
+            muertos_po = df_proyeccion_mrt.at[anio, 'Número de empleos muertos x≥0']
+            empleos = s_empleos.get(anio-1, np.nan)
+            if pd.notna(muertos_po) and pd.notna(empleos) and empleos > 0:
+                df_proyeccion_mrt.at[anio, 'Tasa de mortalidad de los empleos (%)'] = round((muertos_po / empleos) * 100, 2)
+    
+
+    # --- CÁLCULO DE TASAS DE CRECIMIENTO ANUAL DE LA NATALIDAD ---
+
+    if mostrar_unidades and 'Tasa de crecimiento anual de la mortalidad (%)' not in df_proyeccion_mrt.columns:
+        df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad (%)'] = None
+    if mostrar_personal and 'Tasa de crecimiento anual de la mortalidad de los empleos (%)' not in df_proyeccion_mrt.columns:
+        df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad de los empleos (%)'] = None
+
+    
+    if 'Año' in df_proyeccion_mrt.columns:
+        df_proyeccion_mrt = df_proyeccion_mrt.sort_values('Año').reset_index(drop=True)
+
+
+    for i in range(1, len(df_proyeccion_mrt)):
+        if mostrar_unidades:
+            ue_actual = df_proyeccion_mrt.iloc[i][ 'Número de negocios muertos x≥0']
+            ue_anterior = df_proyeccion_mrt.iloc[i-1]['Número de negocios muertos x≥0']
+            if pd.notna(ue_anterior) and ue_anterior > 0:
+                tasa_ue = ((ue_actual / ue_anterior) - 1) * 100
+                if pd.isna(tasa_ue):
+                    tasa_ue = 0.0
+                df_proyeccion_mrt.iloc[i, df_proyeccion_mrt.columns.get_loc('Tasa de crecimiento anual de la mortalidad (%)')] = tasa_ue
+            df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad (%)'] = \
+            df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad (%)'].fillna(0)
+
+
+        if mostrar_personal:
+            po_actual = df_proyeccion_mrt.iloc[i]['Número de empleos muertos x≥0']
+            po_anterior = df_proyeccion_mrt.iloc[i-1]['Número de empleos muertos x≥0']
+            if pd.notna(po_anterior) and po_anterior > 0:
+                tasa_po = ((po_actual / po_anterior) - 1) * 100
+                df_proyeccion_mrt.iloc[i, df_proyeccion_mrt.columns.get_loc('Tasa de crecimiento anual de la mortalidad de los empleos (%)')] = tasa_po
+            df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad de los empleos (%)'] = \
+            df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad de los empleos (%)'].fillna(0)
+
+
+    # Formatear las columnas a dos decimales con símbolo %
+    if mostrar_unidades:
+        df_proyeccion_mrt['Tasa de mortalidad (%)'] = df_proyeccion_mrt['Tasa de mortalidad (%)'].apply(
+            lambda x: f"{x:,.2f}" if pd.notna(x) else None
+        )
+        df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad (%)'] = df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad (%)'].apply(
+            lambda x: f"{x:,.2f}" if pd.notna(x) else None
+        )
+    if mostrar_personal:
+        df_proyeccion_mrt['Tasa de mortalidad de los empleos (%)'] = df_proyeccion_mrt['Tasa de mortalidad de los empleos (%)'].apply(
+            lambda x: f"{x:,.2f}" if pd.notna(x) else None
+        )
+        df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad de los empleos (%)'] = df_proyeccion_mrt['Tasa de crecimiento anual de la mortalidad de los empleos (%)'].apply(
+            lambda x: f"{x:,.2f}" if pd.notna(x) else None
+        )
+
+    # Formato final para visualización
+   
+    # Ordenar por Año y restaurar como columna
+    df_proyeccion_mrt = (
+        df_proyeccion_mrt
+        .sort_index()          # ordena por Año (índice)
+        .reset_index()         # devuelve 'Año' como columna
+        .rename(columns={'index': 'Año'})
+    )
+
+    # Asegurar tipos
+    if 'Año' in df_proyeccion_mrt.columns:
+        df_proyeccion_mrt['Año'] = df_proyeccion_mrt['Año'].astype(int)
+    
+    orden_columnas = [
+        'Activos',
+        'Sobrevivientes ≥5 en el año t',
+        'Número de negocios muertos x≥0',
+        'Tasa de mortalidad (%)',
+        'Tasa de crecimiento anual de la mortalidad (%)',
+        'Empleos activos',
+        'Empleos sobrevivientes ≥5 en el año t',
+        'Número de empleos muertos x≥0',
+        'Tasa de mortalidad de los empleos (%)',
+        'Tasa de crecimiento anual de la mortalidad de los empleos (%)'
+    ]
+    orden_columnas_ue = [
+        'Activos',
+        'Sobrevivientes ≥5 en el año t',
+        'Número de negocios muertos x≥0',
+        'Tasa de mortalidad (%)',
+        'Tasa de crecimiento anual de la mortalidad (%)'        
+    ]
+    orden_columnas_po = [
+        'Empleos activos',
+        'Empleos sobrevivientes ≥5 en el año t',
+        'Número de empleos muertos x≥0',
+        'Tasa de mortalidad de los empleos (%)',
+        'Tasa de crecimiento anual de la mortalidad de los empleos (%)'
+    ]
+    
+    for col in orden_columnas:
+        if col not in df_proyeccion_mrt.columns:
+            df_proyeccion_mrt[col] = pd.NA
+
+    if mostrar_unidades and mostrar_personal:
+        columnas_finales = ['Año'] + [c for c in orden_columnas if c in df_proyeccion_mrt.columns]
+    elif mostrar_unidades:
+            columnas_finales = ['Año'] + [c for c in orden_columnas_ue if c in df_proyeccion_mrt.columns]
+    elif mostrar_personal:
+            columnas_finales = ['Año'] + [c for c in orden_columnas_po if c in df_proyeccion_mrt.columns]
+
+    df_proyeccion_mrt = df_proyeccion_mrt[columnas_finales]
+    
+    
+    df_proyeccion_mrt_formato = df_proyeccion_mrt.copy()
+        
+    if mostrar_unidades:
+        df_proyeccion_mrt_formato.sort_values(by='Año', inplace=True)
+        df_proyeccion_mrt_formato.drop_duplicates(subset='Año', keep='last', inplace=True)
+        df_proyeccion_mrt_formato['Activos'] = round(df_proyeccion_mrt_formato['Activos'].astype(float),0)
+        df_proyeccion_mrt_formato['Activos'] = df_proyeccion_mrt_formato['Activos'].map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
+        df_proyeccion_mrt_formato['Sobrevivientes ≥5 en el año t'] = round(df_proyeccion_mrt_formato['Sobrevivientes ≥5 en el año t'].astype(float),0)
+        df_proyeccion_mrt_formato['Sobrevivientes ≥5 en el año t'] = df_proyeccion_mrt_formato['Sobrevivientes ≥5 en el año t'].map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
+        df_proyeccion_mrt_formato['Número de negocios muertos x≥0'] = round(df_proyeccion_mrt_formato['Número de negocios muertos x≥0'].astype(float),0)
+        df_proyeccion_mrt_formato['Número de negocios muertos x≥0'] = df_proyeccion_mrt_formato['Número de negocios muertos x≥0'].map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
+        df_proyeccion_mrt_formato.reset_index(drop=True, inplace=True)
+
+    if mostrar_personal:
+        df_proyeccion_mrt_formato.sort_values(by='Año', inplace=True)
+        df_proyeccion_mrt_formato.drop_duplicates(subset='Año', keep='last', inplace=True)
+        df_proyeccion_mrt_formato['Empleos activos'] = round(df_proyeccion_mrt_formato['Empleos activos'].astype(float),0)
+        df_proyeccion_mrt_formato['Empleos activos'] = df_proyeccion_mrt_formato['Empleos activos'].map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
+        df_proyeccion_mrt_formato['Empleos sobrevivientes ≥5 en el año t'] = round(df_proyeccion_mrt_formato['Empleos sobrevivientes ≥5 en el año t'].astype(float),0)
+        df_proyeccion_mrt_formato['Empleos sobrevivientes ≥5 en el año t'] = df_proyeccion_mrt_formato['Empleos sobrevivientes ≥5 en el año t'].map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
+        df_proyeccion_mrt_formato['Número de empleos muertos x≥0'] = round(df_proyeccion_mrt_formato['Número de empleos muertos x≥0'].astype(float),0)
+        df_proyeccion_mrt_formato['Número de empleos muertos x≥0'] = df_proyeccion_mrt_formato['Número de empleos muertos x≥0'].map(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) and x != '' else '')
+        df_proyeccion_mrt_formato.reset_index(drop=True, inplace=True)
+   
+     
+    col1, col2 = st.columns([40, 60])
+    with col1:
+        # Mostrar el DataFrame final con la nueva columna
+        st.write(f"Muertes en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+        st.dataframe(df_proyeccion_mrt_formato, use_container_width=True, height=1130)
+
+    with col2:
+        st.write("Visualización de Comportamiento Anual")
+
+        # 1. Gráfico
+        columnas = []
+        if mostrar_unidades:
+            columnas.append('Número de negocios muertos x≥0')
+        if mostrar_personal:
+            columnas.append('Número de empleos muertos x≥0')
+
+        if columnas:
+            fig_negocios = make_subplots(specs=[[{"secondary_y": True}]])
+            for i, col in enumerate(columnas):
+                es_secundario = i > 0  # La segunda métrica (si existe) va en el eje secundario
+                color_trazado = '#08989C' if col == 'Número de negocios muertos x≥0' else '#003057'
+                fig_negocios.add_trace(
+                    go.Scatter(
+                        x=df_proyeccion_mrt_formato['Año'],
+                        y=df_proyeccion_mrt_formato[col],                        
+                        name=col,
+                        mode='lines+markers',
+                        line=dict(color=color_trazado),
+                        marker=dict(color=color_trazado),
+                        hovertemplate='%{y:,.0f}<br>Año: %{x}'
+                    ),
+                    secondary_y=es_secundario
+                )
+            fig_negocios.update_layout(
+                hovermode="x unified",
+                title={
+                    'text': f"Número de muertes en la entidad {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
+                    'font': {'size': 14},
+                    'automargin': False
+                },
+                legend=dict(
+                    x=0.5,
+                    xanchor='center',
+                    y=-0.2,
+                    yanchor='top',
+                    orientation='h'
+                ),
+                xaxis_title = 'Año',
+                margin={'t': 110}
+            )
+        if mostrar_unidades:
+            fig_negocios.update_yaxes(title_text='<b>UNIDADES ECONÓMICAS</b>', title_font=dict(size=13), secondary_y=False)
+        if mostrar_personal:
+            fig_negocios.update_yaxes(title_text='<b>EMPLEOS</b>', title_font=dict(size=13), secondary_y=False)
+        if mostrar_unidades and mostrar_personal:
+            fig_negocios.update_yaxes(title_text='<b>UNIDADES ECONÓMICAS</b>', title_font=dict(size=13), secondary_y=False)
+            fig_negocios.update_yaxes(title_text='<b>EMPLEOS</b>', title_font=dict(size=13), secondary_y=True)
+        with st.container(border=True):
+            st.plotly_chart(fig_negocios, use_container_width=True)
+
+        # 2. Gráfico
+            columnas = []
+            if mostrar_unidades:
+                columnas.append('Tasa de mortalidad (%)')
+            if mostrar_personal:
+                columnas.append('Tasa de mortalidad de los empleos (%)')
+
+            if columnas:
+                fig_negocios_tasas = make_subplots()
+                for i, col in enumerate(columnas):                
+                    color_trazado = '#08989C' if col == 'Tasa de mortalidad (%)' else '#003057'
+                    fig_negocios_tasas.add_trace(
+                        go.Scatter(
+                            x=df_proyeccion_mrt['Año'],
+                            y=df_proyeccion_mrt[col],                        
+                            name=col,
+                            mode='lines+markers',
+                            line=dict(color=color_trazado),
+                            marker=dict(color=color_trazado),
+                            hovertemplate='%{y:,.2f}<br>Año: %{x}'
+                        )
+                    )
+                        
+            fig_negocios_tasas.update_layout(
+                hovermode="x unified",
+                title={
+                    'text': f"Tasa de mortalidad anual en la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
+                    'font': {'size': 14},
+                    'automargin': False
+                },
+                legend=dict(
+                        x=0.5,
+                        xanchor='center',
+                        y=-0.2,
+                        yanchor='top',
+                        orientation='h'
+                    ),
+                xaxis_title = 'Año',
+                margin={'t': 110}
+            )
+            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE MORTALIDAD</b>', title_font=dict(size=13))    
+        with st.container(border=True):
+            st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
+
+
+        # 3. Gráfico
+        columnas = []
+        if mostrar_unidades:
+            columnas.append('Tasa de crecimiento anual de la mortalidad (%)')
+        if mostrar_personal:
+            columnas.append('Tasa de crecimiento anual de la mortalidad de los empleos (%)')
+
+        if columnas:
+            fig_negocios_tasas = make_subplots()
+            for i, col in enumerate(columnas):                
+                color_trazado = '#08989C' if col == 'Tasa de crecimiento anual de la mortalidad (%)' else '#003057'
+                fig_negocios_tasas.add_trace(
+                    go.Scatter(
+                        x=df_proyeccion_mrt['Año'],
+                        y=df_proyeccion_mrt[col],                        
+                        name=col,
+                        mode='lines+markers',
+                        line=dict(color=color_trazado),
+                        marker=dict(color=color_trazado),
+                        hovertemplate='%{y:,.2f}<br>Año: %{x}'
+                    )
+                )
+                    
+        fig_negocios_tasas.update_layout(
+            hovermode="x unified",
+            title={
+                'text': f"Tasa de crecimiento anual de la mortalidad en la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
+                'font': {'size': 14},
+                'automargin': False
+            },
+            legend=dict(
+                    x=0.5,
+                    xanchor='center',
+                    y=-0.2,
+                    yanchor='top',
+                    orientation='h'
+                ),
+            xaxis_title = 'Año',
+            margin={'t': 110}
+        )
+        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE CRECIMIENTO</b>', title_font=dict(size=13))    
+        with st.container(border=True):
+            st.plotly_chart(fig_negocios_tasas, use_container_width=True)         
+
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True) 
