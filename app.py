@@ -114,7 +114,7 @@ with st.sidebar:
     if entidad == 'NACIONAL' and sector =='TODOS LOS SECTORES':
         personal_seleccionado = st.selectbox(
             'TAMAÑO:',
-        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101-250 Personas ocupadas','251 y más Personas ocupadas']
+        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101 y más Personas ocupadas']
         )
 
     elif entidad == 'NACIONAL' and sector == 'MANUFACTURAS':
@@ -402,7 +402,7 @@ with st.sidebar:
     elif entidad == 'CIUDAD DE MEXICO' and sector =='TODOS LOS SECTORES':
         personal_seleccionado = st.selectbox(
             'TAMAÑO:',
-        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101-250 Personas ocupadas','251 y más Personas ocupadas']
+        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101 y más Personas ocupadas']
         )
 
     elif entidad == 'CIUDAD DE MEXICO' and sector == 'MANUFACTURAS':
@@ -594,7 +594,7 @@ with st.sidebar:
     elif entidad == 'JALISCO' and sector =='TODOS LOS SECTORES':
         personal_seleccionado = st.selectbox(
             'TAMAÑO:',
-        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101-250 Personas ocupadas','251 y más Personas ocupadas']
+        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101 y más Personas ocupadas']
         )
 
     elif entidad == 'JALISCO' and sector == 'MANUFACTURAS':
@@ -626,7 +626,7 @@ with st.sidebar:
     elif entidad == 'MEXICO' and sector =='TODOS LOS SECTORES':
         personal_seleccionado = st.selectbox(
             'TAMAÑO:',
-        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101-250 Personas ocupadas','251 y más Personas ocupadas']
+        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101 y más Personas ocupadas']
         )
 
     elif entidad == 'MEXICO' and sector == 'MANUFACTURAS':
@@ -754,7 +754,7 @@ with st.sidebar:
     elif entidad == 'NUEVO LEON' and sector =='TODOS LOS SECTORES':
         personal_seleccionado = st.selectbox(
             'TAMAÑO:',
-        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101-250 Personas ocupadas','251 y más Personas ocupadas']
+        ['CONCENTRADOS','0-2 Personas ocupadas','3-5 Personas ocupadas','6-10 Personas ocupadas','11-15 Personas ocupadas','16-20 Personas ocupadas','21-30 Personas ocupadas','31-50 Personas ocupadas','51-100 Personas ocupadas','101 y más Personas ocupadas']
         )
 
     elif entidad == 'NUEVO LEON' and sector == 'MANUFACTURAS':
@@ -1212,6 +1212,11 @@ with st.sidebar:
         "MATRIZ DE DATOS", options, selection_mode="single"
     )
 
+    options2 = ['Mostrar Totales Unidades Económicas']
+    selection2 = st.segmented_control(
+        'TOTALES', options2, selection_mode='single'
+    )
+
 mapa_estratos = {
     '0-2 Personas ocupadas': 1,
     '3-5 Personas ocupadas': 2,
@@ -1220,8 +1225,7 @@ mapa_estratos = {
     '16-20 Personas ocupadas': 5,
     '21-30 Personas ocupadas': 6,
     '31-50 Personas ocupadas': 7,
-    '51-100 Personas ocupadas': 8,
-    '101-250 Personas ocupadas': 9,    
+    '51-100 Personas ocupadas': 8,        
     '3 y más Personas ocupadas': 2,
     '6 y más Personas ocupadas': 3,
     '11 y más Personas ocupadas': 4,
@@ -1229,8 +1233,7 @@ mapa_estratos = {
     '21 y más Personas ocupadas': 6,    
     '31 y más Personas ocupadas': 7,
     '51 y más Personas ocupadas': 8,
-    '101 y más Personas ocupadas': 9,
-    '251 y más Personas ocupadas': 10
+    '101 y más Personas ocupadas': 9    
 }
 # --- FIN DE SELECTBOXES ---
 
@@ -1261,7 +1264,29 @@ if personal_seleccionado and personal_seleccionado != 'CONCENTRADOS':
             df_final_filtrado = df_final_filtrado[df_final_filtrado['personal_ocupado_estrato'] == estrato_seleccionado]
     else:
         st.warning("No se pudo interpretar el formato del rango de personal ocupado. El filtro no se aplicará.")
-    
+
+
+#---TITULOS DINÁMICOS PARA TABLAS Y GRÁFICAS---
+titulo_entidad = {}
+if entidad == 'NACIONAL':
+    titulo_entidad = 'a nivel Nacional'
+else:
+    titulo_entidad = f"en la entidad de {entidad.title().replace('De','de').replace('Del','del')}"
+
+titulo_sector = {}
+if sector == 'TODOS LOS SECTORES':
+    titulo_sector = 'pertenecientes a todos los sectores'
+elif sector == 'OTROS SECTORES':
+    titulo_sector = 'pertenecientes a otros sectores'
+else:
+    titulo_sector = f"pertenecientes al sector {sector.capitalize()}"
+
+titulo_tamano = {}
+if personal_seleccionado == 'CONCENTRADOS':
+    titulo_tamano = 'de todos los tamaños'
+else:
+    titulo_tamano = f"con {personal_seleccionado.lower()}"
+
 
 # --- VISUALIZACIÓN DE LA TABLA SOLICITADA ---
 
@@ -1315,16 +1340,15 @@ matriz_principal = tabla_formato.copy()
 
 if selection == 'Mostrar Matriz':
     st.markdown('---')
-    st.dataframe(matriz_principal, use_container_width=True)
+    st.dataframe(matriz_principal, use_container_width=True, height=1510)
+    st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 else:
     st.empty()
+
+
+if selection == 'Mostrar Totales Unidades Económicas':
+    st.write('En proceso')
     
-        
-
-
-
-
-
 
 # --- CÁLCULO Y VISUALIZACIÓN DEL CRECIMIENTO DINÁMICO ---
 #st.subheader("Índice de Crecimiento por Censo")
@@ -1714,8 +1738,9 @@ if fenomeno_demografico == 'Población activa':
     col1, col2 = st.columns([40, 60])
     with col1:
         # Mostrar el DataFrame final con la nueva columna
-        st.write(f"Comportamiento anual de población activa en {entidad.capitalize()}, pertenecientes al sector {sector.replace('TP', '').capitalize()} con {personal_seleccionado}")
-        st.dataframe(df_proyeccion_formato, use_container_width=True, height=950)
+        st.write(f"Comportamiento anual de población activa {titulo_entidad}, {titulo_sector} {titulo_tamano}")
+        st.dataframe(df_proyeccion_formato, use_container_width=True, height=1040)
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
         
 
 
@@ -1750,8 +1775,8 @@ if fenomeno_demografico == 'Población activa':
             fig_negocios.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Comportamiento anual de población activa en la entidad de {entidad.title()}, pertenecientes al sector<br>{sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Comportamiento anual de población activa {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -1773,7 +1798,7 @@ if fenomeno_demografico == 'Población activa':
                 fig_negocios.update_yaxes(title_text='<b>PERSONAL OCUPADO TOTAL</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
-        
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
                     
         # 2. Gráfico de Tasas de Crecimiento   
         columnas = []
@@ -1801,8 +1826,8 @@ if fenomeno_demografico == 'Población activa':
         fig_negocios_tasas.update_layout(
             hovermode="x unified",
             title={
-                'text': f"Tasa de crecimiento anual de población activa en la entidad de {entidad.title()}, pertenecientes al sector<br>{sector.title()}, con {personal_seleccionado.lower()}",
-                'font': {'size': 14},
+                'text': f"Tasa de crecimiento anual de población activa {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                'font': {'size': 15},
                 'automargin': False
             },
             legend=dict(
@@ -2624,8 +2649,9 @@ if fenomeno_demografico == 'Natalidad':
     #---Información en columnas y las gráficas
     col1, col2 = st.columns([40, 60])
     with col1:
-        st.write(f"Comportamiento anual de Natalidad en {entidad.capitalize()}, pertenecientes al sector {sector.replace('TP', '').capitalize()} con {personal_seleccionado}")
+        st.write(f"Comportamiento anual de natalidad {titulo_entidad}, {titulo_sector} {titulo_tamano}")
         st.dataframe(df_proyeccion_nat_formato, use_container_width=False, height=1300)
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
 
 
@@ -2660,8 +2686,8 @@ if fenomeno_demografico == 'Natalidad':
             fig_negocios.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Comportamiento anual de nacimientos en la entidad de {entidad.title()}, pertenecientes al sector<br>{sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Comportamiento anual de nacimientos {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -2683,7 +2709,7 @@ if fenomeno_demografico == 'Natalidad':
                 fig_negocios.update_yaxes(title_text='<b>NACIMIENTOS DE EMPLEOS</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
-        
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
                     
         # 2. Gráfico de Tasas de Crecimiento   
         columnas = []
@@ -2711,8 +2737,8 @@ if fenomeno_demografico == 'Natalidad':
         fig_negocios_tasas.update_layout(
             hovermode="x unified",
             title={
-                'text': f"Tasa de natalidad en la entidad de {entidad.title()}, pertenecientes al sector<br>{sector.title()}, con {personal_seleccionado.lower()}",
-                'font': {'size': 14},
+                'text': f"Tasa de natalidad {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                'font': {'size': 15},
                 'automargin': False
             },
             legend=dict(
@@ -2728,7 +2754,7 @@ if fenomeno_demografico == 'Natalidad':
         fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE NATALIDAD</b>', title_font=dict(size=13))    
         with st.container(border=True):
             st.plotly_chart(fig_negocios_tasas, use_container_width=True)
-
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         # 3. Gráfico de Tasas de Crecimiento
         columnas = []
@@ -2756,8 +2782,8 @@ if fenomeno_demografico == 'Natalidad':
         fig_negocios_tasas.update_layout(
             hovermode="x unified",
             title={
-                'text': f"Tasa de crecimiento de natalidad en la entidad de {entidad.title()}, pertenecientes al sector<br>{sector.title()}, con {personal_seleccionado.lower()}",
-                'font': {'size': 14},
+                'text': f"Tasa de crecimiento de natalidad {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                'font': {'size': 15},
                 'automargin': False
             },
             legend=dict(
@@ -3105,8 +3131,9 @@ if fenomeno_demografico == 'Supervivencia':
         col1, col2 = st.columns([40, 60])
         with col1:
             # Mostrar el DataFrame final con la nueva columna
-            st.write(f"Supervivientes 5 años después de haber nacido en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+            st.write(f"Supervivientes 5 años después de haber nacido {titulo_entidad}, {titulo_sector} {titulo_tamano}")
             st.dataframe(df_proyeccion_sprv5_formato, use_container_width=True, height=1140)
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         with col2:
             st.write("Visualización de Comportamiento Anual")
@@ -3138,8 +3165,8 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_layout(
                     hovermode="x unified",
                     title={
-                        'text': f"Número de unidades económicas supervivientes al año t, nacidas 5 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                        'font': {'size': 14},
+                        'text': f"Número de supervivientes al año t, nacidas 5 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                        'font': {'size': 15},
                         'automargin': False
                     },
                     legend=dict(
@@ -3161,7 +3188,7 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
-                    
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)      
 
             # 2. Gráfico               
             columnas = []
@@ -3189,8 +3216,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Probabilidad de superviviencia al año t de las unidades económicas que nacieron 5 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Probabilidad de superviviencia al año t que nacieron 5 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -3206,7 +3233,7 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_yaxes(title_text='<b>PROBABILIDAD</b>', title_font=dict(size=13))    
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)
-         
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
                      
             # 3. Gráfico    
             columnas = []
@@ -3234,8 +3261,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Tasa de crecimiento anual de la supervivencia al año t de las unidades económicas que nacieron 5 año antes en<br>la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Tasa de crecimiento anual de la supervivencia al año t que nacieron 5 año antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -3572,8 +3599,9 @@ if fenomeno_demografico == 'Supervivencia':
         col1, col2 = st.columns([40, 60])
         with col1:
             # Mostrar el DataFrame final con la nueva columna
-            st.write(f"Supervivientes 10 años después de haber nacido en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+            st.write(f"Supervivientes 10 años después de haber nacido {titulo_entidad}, {titulo_sector} {titulo_tamano}")
             st.dataframe(df_proyeccion_sprv10_formato, use_container_width=True, height=950)
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         with col2:
             st.write("Visualización de Comportamiento Anual")
@@ -3606,8 +3634,8 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_layout(
                     hovermode="x unified",
                     title={
-                        'text': f"Número de unidades económicas supervivientes al año t, nacidas 10 años antes<br>en la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                        'font': {'size': 14},
+                        'text': f"Número de supervivientes al año t, nacidas 10 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                        'font': {'size': 15},
                         'automargin': False
                     },
                     legend=dict(
@@ -3629,7 +3657,8 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_yaxes(title_text='<b>SUPERVIVIENTES PO</b>', title_font=dict(size=13), secondary_y=True)
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
-
+            
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 2. Gráfico 
             columnas = []
@@ -3657,8 +3686,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Probabilidad de superviviencia al año t de las unidades económicas que nacieron 10 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Probabilidad de superviviencia al año t que nacieron 10 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -3675,6 +3704,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 3. Gráfico
             columnas = []
@@ -3702,8 +3732,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Tasa de crecimiento anual de la supervivencia al año t de las unidades económicas que nacieron 10 año antes en<br>la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Tasa de crecimiento anual de la supervivencia al año t que nacieron 10 año antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -4040,8 +4070,9 @@ if fenomeno_demografico == 'Supervivencia':
         col1, col2 = st.columns([40, 60])
         with col1:
             # Mostrar el DataFrame final con la nueva columna
-            st.write(f"Supervivientes 15 años después de haber nacido en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+            st.write(f"Supervivientes 15 años después de haber nacido {titulo_entidad}, {titulo_sector} {titulo_tamano}")
             st.dataframe(df_proyeccion_sprv15_formato, use_container_width=True, height=780)
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         with col2:
             st.write("Visualización de Comportamiento Anual")
@@ -4073,8 +4104,8 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_layout(
                     hovermode="x unified",
                     title={
-                        'text': f"Número de unidades económicas supervivientes al año t, nacidas 15 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                        'font': {'size': 14},
+                        'text': f"Número de supervivientes al año t, nacidas 15 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                        'font': {'size': 15},
                         'automargin': False
                     },
                     legend=dict(
@@ -4097,6 +4128,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 2. Gráfico
             columnas = []
@@ -4124,8 +4156,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Probabilidad de superviviencia al año t de las unidades económicas que nacieron 15 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Probabilidad de superviviencia al año t que nacieron 15 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -4142,6 +4174,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 3. Gráfico
             columnas = []
@@ -4169,8 +4202,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Tasa de crecimiento anual de la supervivencia al año t de las unidades económicas que nacieron 15 años antes en<br>la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Tasa de crecimiento anual de la supervivencia al año t que nacieron 15 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -4506,8 +4539,9 @@ if fenomeno_demografico == 'Supervivencia':
         col1, col2 = st.columns([40, 60])
         with col1:
             # Mostrar el DataFrame final con la nueva columna
-            st.write(f"Supervivientes 20 años después de haber nacido en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+            st.write(f"Supervivientes 20 años después de haber nacido {titulo_entidad}, {titulo_sector} {titulo_tamano}")
             st.dataframe(df_proyeccion_sprv20_formato, use_container_width=True, height=595)
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         with col2:
             st.write("Visualización de Comportamiento Anual")
@@ -4539,8 +4573,8 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_layout(
                     hovermode="x unified",
                     title={
-                        'text': f"Número de unidades económicas supervivientes al año t, nacidas 20 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                        'font': {'size': 14},
+                        'text': f"Número de supervivientes al año t, nacidas 20 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                        'font': {'size': 15},
                         'automargin': False
                     },
                     legend=dict(
@@ -4563,6 +4597,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 2. Gráfico
             columnas = []
@@ -4590,8 +4625,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Probabilidad de superviviencia al año t de las unidades económicas que nacieron 20 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Probabilidad de superviviencia al año t que nacieron 20 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -4608,6 +4643,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 3. Gráfico
             columnas = []
@@ -4635,8 +4671,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Tasa de crecimiento anual de la supervivencia al año t de las unidades económicas que nacieron 20 años antes en<br>la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Tasa de crecimiento anual de la supervivencia al año t que nacieron 20 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -4973,8 +5009,9 @@ if fenomeno_demografico == 'Supervivencia':
         col1, col2 = st.columns([40, 60])
         with col1:
             # Mostrar el DataFrame final con la nueva columna
-            st.write(f"Supervivientes 25 años después de haber nacido en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+            st.write(f"Supervivientes 25 años después de haber nacido {titulo_entidad}, {titulo_sector} {titulo_tamano}")
             st.dataframe(df_proyeccion_sprv25_formato, use_container_width=True, height=420)
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         with col2:
             st.write("Visualización de Comportamiento Anual")
@@ -5006,8 +5043,8 @@ if fenomeno_demografico == 'Supervivencia':
                 fig_negocios.update_layout(
                     hovermode="x unified",
                     title={
-                        'text': f"Número de unidades económicas supervivientes al año t, nacidas 25 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                        'font': {'size': 14},
+                        'text': f"Número de supervivientes al año t, nacidas 25 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                        'font': {'size': 15},
                         'automargin': False
                     },
                     legend=dict(
@@ -5030,6 +5067,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios, use_container_width=True)
 
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 2. Gráfico
             columnas = []
@@ -5057,8 +5095,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Probabilidad de superviviencia al año t de las unidades económicas que nacieron 25 años antes en la entidad de<br>{entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Probabilidad de superviviencia al año t que nacieron 25 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -5075,6 +5113,7 @@ if fenomeno_demografico == 'Supervivencia':
             with st.container(border=True):
                 st.plotly_chart(fig_negocios_tasas, use_container_width=True)  
             
+            st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
             # 3. Gráfico
             columnas = []
@@ -5102,8 +5141,8 @@ if fenomeno_demografico == 'Supervivencia':
             fig_negocios_tasas.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Tasa de crecimiento anual de la supervivencia al año t de las unidades económicas que nacieron 25 años antes en<br>la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Tasa de crecimiento anual de la supervivencia al año t que nacieron 25 años antes {titulo_entidad},<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -5145,13 +5184,13 @@ if fenomeno_demografico == 'Mortalidad':
         df_activos_completo = df_proyeccion[['Año', 'Número de Negocios', 'Personal Ocupado']].copy()
         df_activos.reset_index(drop=True, inplace=True)
     
-
+    #st.write('df_activos_completo')
     #st.dataframe(df_activos_completo)
     #st.dataframe(df_activos)
-
-
+    
+    #st.write('df_mrt')
     df_mrt = tabla_pivote.copy()
-           
+    #st.dataframe(df_mrt)          
     df_mrt.columns = [col.strip() for col in df_mrt.columns]
     
     # Extraer censos únicos en orden original
@@ -5189,6 +5228,8 @@ if fenomeno_demografico == 'Mortalidad':
         nueva_tabla['PO'][censo] = suma_po
     
     # Convertir a DataFrame con censos como columnas
+    #st.write('nueva_tabla')
+    #st.dataframe(nueva_tabla)
     tabla_sprv_t = pd.DataFrame(nueva_tabla).T
     #st.write('tabla_sprv_t')
     #st.dataframe(tabla_sprv_t, use_container_width=True)
@@ -5320,12 +5361,133 @@ if fenomeno_demografico == 'Mortalidad':
         nombres_filas.append("Personal Ocupado")
 
     # Mostrar tabla combinada
-    #st.write('df_crecimiento_mrt')
+    
     if filas:
         df_crecimiento_mrt = pd.DataFrame(filas, columns=etiquetas, index=nombres_filas)
+        #st.write('df_crecimiento_mrt')
         #st.dataframe(df_crecimiento_mrt, use_container_width=True)
     else:
         st.info("Selecciona al menos una métrica para calcular el índice de crecimiento.")
+
+
+    #--- Nuevo algoritmo para muertes----
+    df_mrt = df_mrt.reset_index()
+    
+    # Mantener solo las columnas esperadas
+    expected_cols = ["Año",
+        "CE 1988 - PO","CE 1988 - UE","CE 1993 - PO","CE 1993 - UE",
+        "CE 1998 - PO","CE 1998 - UE","CE 2003 - PO","CE 2003 - UE",
+        "CE 2008 - PO","CE 2008 - UE","CE 2013 - PO","CE 2013 - UE",
+        "CE 2018 - PO","CE 2018 - UE","CE 2023 - PO","CE 2023 - UE"
+    ]
+    df_mrt = df_mrt[[c for c in expected_cols if c in df_mrt.columns]].copy()
+    
+    # Tipos numéricos y limpieza de totales (Año=0)
+    for c in df_mrt.columns:
+        if c != "Año":
+            df_mrt[c] = pd.to_numeric(df_mrt[c], errors="coerce")
+    df_mrt = df_mrt[df_mrt["Año"].ne(0)].sort_values("Año").reset_index(drop=True)
+
+    # --- 2) Construir diferencias A(Y) - B(Y+1) con límites de filas ---
+    ce_years  = [1988, 1993, 1998, 2003, 2008, 2013, 2018, 2023]
+    metrics   = ["UE", "PO"]
+    row_caps  = [5, 10, 15, 20, 25, 30, 35]  # filas iniciales a calcular por columna
+
+    for i in range(len(ce_years) - 1):
+        a_year, b_year = ce_years[i], ce_years[i+1]
+        limit = row_caps[i]  # 0..limit-1 (filas desde 1983)
+        for m in metrics:
+            a_col = f"CE {a_year} - {m}"
+            b_col = f"CE {b_year} - {m}"
+            if a_col in df_mrt.columns and b_col in df_mrt.columns:
+                new_col = f"Diff {m} {a_year}-{b_year}"
+                s = df_mrt[a_col] - df_mrt[b_col].shift(-1)  # A(Y) - B(Y+1)
+                s = s.mask(s.index >= limit, np.nan) # NaN fuera del rango pedido
+                df_mrt[new_col] = s
+
+    # --- 3) Salida: solo Año + diferencias ---
+    diff_cols = [c for c in df_mrt.columns if c.startswith("Diff ")]
+    out_df_mrt = df_mrt[["Año"] + diff_cols]
+        
+    #st.write('out_df_mrt')
+    #st.dataframe(out_df_mrt, use_container_width=False)
+
+    # === 4) Construir tabla_mrt con el mismo layout del anexo ===
+    ce_years = [1988, 1993, 1998, 2003, 2008, 2013, 2018, 2023]
+    metrics  = ["UE", "PO"]
+
+    # Columnas destino: todas las CE excepto la primera (1988 no tiene "siguiente")
+    tabla_cols = [f"CE {y}" for y in ce_years[1:]]
+
+    # Inicializa con ceros
+    tabla_mrt_two = pd.DataFrame(0, index=metrics, columns=tabla_cols, dtype="int64")
+
+    # Llena la tabla sumando SOLO los valores positivos de cada diff
+    for i in range(len(ce_years) - 1):
+        a_year, b_year = ce_years[i], ce_years[i+1]
+        dest_col = f"CE {b_year}"
+        for m in metrics:
+            diff_col = f"Diff {m} {a_year}-{b_year}"
+            if diff_col in out_df_mrt.columns:
+                # Suma positiva (ignora NaN; cuenta solo > 0)
+                pos_sum = out_df_mrt[diff_col]
+                pos_sum = pos_sum[pos_sum > 0].sum(skipna=True)
+                # Asegura entero (0 si es NaN)
+                tabla_mrt_two.loc[m, dest_col] = int(pos_sum) if pd.notna(pos_sum) else 0
+            else:
+                # Si no existe el diff, deja 0
+                tabla_mrt_two.loc[m, dest_col] = 0
+      
+    #st.write('tabla_mrt_two')
+    #st.dataframe(tabla_mrt_two, use_container_width=True)
+
+
+    
+    #Calcular crecimiento
+    filas = []
+    nombres_filas = []
+    etiquetas = []
+
+    # Función para calcular crecimiento porcentual entre censos
+    def df_crecimiento_mrt_two(valores):
+        resultados = []
+        for i in range(1, len(valores)):
+            anterior = valores[i - 1]
+            actual = valores[i]
+            if anterior and actual and anterior != '' and actual != '':
+                anterior_num = float(str(anterior).replace(',', ''))
+                actual_num = float(str(actual).replace(',', ''))
+                if anterior_num > 0:
+                    crecimiento = ((actual_num) / anterior_num) ** 0.2
+                    resultados.append(crecimiento)
+                else:
+                    resultados.append(None)
+            else:
+                resultados.append(None)
+        return resultados
+
+    # Etiquetas para columnas (pares de censos)
+    etiquetas = [f"{tabla_mrt_two.columns[i-1]}-{tabla_mrt_two.columns[i]}" for i in range(1, len(tabla_mrt_two.columns))]
+
+    # Calcular según selección
+    if mostrar_unidades:
+        valores_ue = tabla_mrt_two.loc['UE'].tolist()
+        filas.append(df_crecimiento_mrt_two(valores_ue))
+        nombres_filas.append("Unidades Económicas")
+
+    if mostrar_personal:
+        valores_po = tabla_mrt_two.loc['PO'].tolist()
+        filas.append(df_crecimiento_mrt_two(valores_po))
+        nombres_filas.append("Personal Ocupado")
+
+    # Mostrar tabla combinada
+    if filas:
+        df_crecimiento_mrt_two = pd.DataFrame(filas, columns=etiquetas, index=nombres_filas)
+        #st.write('df_crecimiento_mrt_two')
+        #st.dataframe(df_crecimiento_mrt_two, use_container_width=True)
+    else:
+        st.info("Selecciona al menos una métrica para calcular el índice de crecimiento.")
+
 
     
     # TABLA DE PROYECCION DE MORTALIDAD
@@ -5551,8 +5713,8 @@ if fenomeno_demografico == 'Mortalidad':
 
     # MUERTOS (UE/PO) hasta 2019 — 
 
-    for i in range(len(df_crecimiento_mrt.columns)):
-        periodo = df_crecimiento_mrt.columns[i]
+    for i in range(len(df_crecimiento_mrt_two.columns)):
+        periodo = df_crecimiento_mrt_two.columns[i]
         partes = periodo.split('-')
 
         anio_inicio_completo = partes[0].strip()
@@ -5568,21 +5730,21 @@ if fenomeno_demografico == 'Mortalidad':
 
         
         if mostrar_unidades:
-            valor_actual_ue = float(tabla_mrt.loc['UE', etiqueta_columna])
-            tasa_ue = df_crecimiento_mrt.loc['Unidades Económicas', periodo]
+            valor_actual_ue = float(tabla_mrt_two.loc['UE', etiqueta_columna])
+            tasa_ue = df_crecimiento_mrt_two.loc['Unidades Económicas', periodo]
             tasa_ue = 0 if pd.isna(tasa_ue) else float(tasa_ue)
             df_proyeccion_mrt.loc[anio_inicio, 'Número de negocios muertos x≥0'] = valor_actual_ue
 
         if mostrar_personal:
-            valor_actual_po = float(tabla_mrt.loc['PO', etiqueta_columna])
-            tasa_po = df_crecimiento_mrt.loc['Personal Ocupado', periodo]
+            valor_actual_po = float(tabla_mrt_two.loc['PO', etiqueta_columna])
+            tasa_po = df_crecimiento_mrt_two.loc['Personal Ocupado', periodo]
             tasa_po = 0 if pd.isna(tasa_po) else float(tasa_po)
             df_proyeccion_mrt.loc[anio_inicio, 'Número de empleos muertos x≥0'] = valor_actual_po
         
 
         # Intermedio (sin pasar de 2019 en este tramo)
         for anio in range(anio_inicio + 1, anio_fin):
-            if anio_fin > 2019:
+            if anio_fin > 2023:
                 break  # 2019 o superiores se manejan fuera (o no se proyectan aquí)
 
             base_activos = (df_activos_completo.set_index('Año')
@@ -5590,88 +5752,23 @@ if fenomeno_demografico == 'Mortalidad':
                             else df_activos_completo)
 
             if mostrar_unidades:
-                if tasa_ue == 0:
-                    
-                    activos_5 = (float(base_activos.loc[anio - 5, 'Número de Negocios'])
-                                if (anio - 5) in base_activos.index else np.nan)
-                    
-                    sobrev = (float(df_proyeccion_mrt.loc[anio, 'Sobrevivientes ≥5 en el año t'])
-                            if ('Sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
-                            else np.nan)
-
-                    
-                    if pd.isna(activos_5) or pd.isna(sobrev):
-                        valor_actual_ue = np.nan
-                    else:
-                        valor_actual_ue = activos_5 - sobrev
-                        if valor_actual_ue < 0:
-                            valor_actual_ue = 0.0
-                else:
-                    valor_actual_ue *= tasa_ue
+                valor_actual_ue *= tasa_ue
 
                 df_proyeccion_mrt.loc[anio, 'Número de negocios muertos x≥0'] = valor_actual_ue
 
             
             if mostrar_personal:
-                if tasa_po == 0:
-                    empleos_activos_5 = (float(base_activos.loc[anio - 5, 'Personal Ocupado'])
-                                        if (anio - 5) in base_activos.index else np.nan)
-                    sobrev_po = (float(df_proyeccion_mrt.loc[anio, 'Empleos sobrevivientes ≥5 en el año t'])
-                                if ('Empleos sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
-                                else np.nan)
-
-                    if pd.isna(empleos_activos_5) or pd.isna(sobrev_po):
-                        valor_actual_po = np.nan
-                    else:
-                        valor_actual_po = empleos_activos_5 - sobrev_po
-                        if valor_actual_po < 0:
-                            valor_actual_po = 0.0
-                else:
-                    valor_actual_po *= tasa_po
+                valor_actual_po *= tasa_po
 
                 df_proyeccion_mrt.loc[anio, 'Número de empleos muertos x≥0'] = valor_actual_po
 
-        
-        base_activos = (df_activos_completo.set_index('Año')
-                            if 'Año' in df_activos_completo.columns
-                            else df_activos_completo)
 
-        for anio in range(2019, 2023):
-            if mostrar_unidades:
-                activos_1 = (float(base_activos.loc[anio - 1, 'Número de Negocios'])
-                            if (anio - 1) in base_activos.index else np.nan)
-                
-                sobrev = (float(df_proyeccion_mrt.loc[anio, 'Sobrevivientes ≥5 en el año t'])
-                        if ('Sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
-                        else np.nan)
-                if pd.isna(activos_1) or pd.isna(sobrev):
-                    valor_actual_ue = np.nan
-                else:
-                    valor_actual_ue = activos_1 - sobrev
-                    if valor_actual_ue < 0:
-                        valor_actual_ue = 0.0
-                df_proyeccion_mrt.loc[anio, 'Número de negocios muertos x≥0'] = valor_actual_ue
-
-            if mostrar_personal:
-                empleos_activos_1 = (float(base_activos.loc[anio - 1, 'Personal Ocupado'])
-                                    if (anio - 1) in base_activos.index else np.nan)
-                sobrev_po = (float(df_proyeccion_mrt.loc[anio, 'Empleos sobrevivientes ≥5 en el año t'])
-                            if ('Empleos sobrevivientes ≥5 en el año t' in df_proyeccion_mrt.columns and anio in df_proyeccion_mrt.index)
-                            else np.nan)
-
-                if pd.isna(empleos_activos_1) or pd.isna(sobrev_po):
-                    valor_actual_po = np.nan
-                else:
-                    valor_actual_po = empleos_activos_1 - sobrev_po
-                    if valor_actual_po < 0:
-                        valor_actual_po = 0.0
-                df_proyeccion_mrt.loc[anio, 'Número de empleos muertos x≥0'] = valor_actual_po
 
     # Añadir 2023 muertos desde tabla_mrt
     if mostrar_unidades:
         try:
             df_proyeccion_mrt.loc[2023, 'Número de negocios muertos x≥0'] = float(
-                tabla_mrt.loc['UE', 'CE 2023']
+                tabla_mrt_two.loc['UE', 'CE 2023']
             )
         except Exception as e:
             st.warning(f"No se pudo asignar UE muertos 2023 desde 'tabla_mrt': {e}")
@@ -5679,7 +5776,7 @@ if fenomeno_demografico == 'Mortalidad':
     if mostrar_personal:
         try:
             df_proyeccion_mrt.loc[2023, 'Número de empleos muertos x≥0'] = float(
-                tabla_mrt.loc['PO', 'CE 2023']
+                tabla_mrt_two.loc['PO', 'CE 2023']
             )
         except Exception as e:
             st.warning(f"No se pudo asignar PO muertos 2023 desde 'tabla_mrt': {e}")
@@ -5842,8 +5939,9 @@ if fenomeno_demografico == 'Mortalidad':
     col1, col2 = st.columns([40, 60])
     with col1:
         # Mostrar el DataFrame final con la nueva columna
-        st.write(f"Muertes en {entidad.capitalize()}, pertenecientes al sector {sector.capitalize()} con {personal_seleccionado}")
+        st.write(f"Muertes {titulo_entidad}, {titulo_sector} {titulo_tamano}")
         st.dataframe(df_proyeccion_mrt_formato, use_container_width=True, height=1130)
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
     with col2:
         st.write("Visualización de Comportamiento Anual")
@@ -5875,8 +5973,8 @@ if fenomeno_demografico == 'Mortalidad':
             fig_negocios.update_layout(
                 hovermode="x unified",
                 title={
-                    'text': f"Número de muertes en la entidad {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
+                    'text': f"Número de muertes {titulo_entidad} antes de llegar al año t,<br>{titulo_sector} {titulo_tamano}",
+                    'font': {'size': 15},
                     'automargin': False
                 },
                 legend=dict(
@@ -5899,50 +5997,53 @@ if fenomeno_demografico == 'Mortalidad':
         with st.container(border=True):
             st.plotly_chart(fig_negocios, use_container_width=True)
 
-        # 2. Gráfico
-            columnas = []
-            if mostrar_unidades:
-                columnas.append('Tasa de mortalidad (%)')
-            if mostrar_personal:
-                columnas.append('Tasa de mortalidad de los empleos (%)')
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
-            if columnas:
-                fig_negocios_tasas = make_subplots()
-                for i, col in enumerate(columnas):                
-                    color_trazado = '#08989C' if col == 'Tasa de mortalidad (%)' else '#003057'
-                    fig_negocios_tasas.add_trace(
-                        go.Scatter(
-                            x=df_proyeccion_mrt['Año'],
-                            y=df_proyeccion_mrt[col],                        
-                            name=col,
-                            mode='lines+markers',
-                            line=dict(color=color_trazado),
-                            marker=dict(color=color_trazado),
-                            hovertemplate='%{y:,.2f}<br>Año: %{x}'
-                        )
+        # 2. Gráfico
+        columnas = []
+        if mostrar_unidades:
+            columnas.append('Tasa de mortalidad (%)')
+        if mostrar_personal:
+            columnas.append('Tasa de mortalidad de los empleos (%)')
+
+        if columnas:
+            fig_negocios_tasas = make_subplots()
+            for i, col in enumerate(columnas):                
+                color_trazado = '#08989C' if col == 'Tasa de mortalidad (%)' else '#003057'
+                fig_negocios_tasas.add_trace(
+                    go.Scatter(
+                        x=df_proyeccion_mrt['Año'],
+                        y=df_proyeccion_mrt[col],                        
+                        name=col,
+                        mode='lines+markers',
+                        line=dict(color=color_trazado),
+                        marker=dict(color=color_trazado),
+                        hovertemplate='%{y:,.2f}<br>Año: %{x}'
                     )
-                        
-            fig_negocios_tasas.update_layout(
-                hovermode="x unified",
-                title={
-                    'text': f"Tasa de mortalidad anual en la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                    'font': {'size': 14},
-                    'automargin': False
-                },
-                legend=dict(
-                        x=0.5,
-                        xanchor='center',
-                        y=-0.2,
-                        yanchor='top',
-                        orientation='h'
-                    ),
-                xaxis_title = 'Año',
-                margin={'t': 110}
-            )
-            fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE MORTALIDAD</b>', title_font=dict(size=13))    
+                )
+                    
+        fig_negocios_tasas.update_layout(
+            hovermode="x unified",
+            title={
+                'text': f"Tasa de mortalidad que murieron {titulo_entidad} antes de llegar al año t,<br>{titulo_sector} {titulo_tamano}",
+                'font': {'size': 15},
+                'automargin': False
+            },
+            legend=dict(
+                    x=0.5,
+                    xanchor='center',
+                    y=-0.2,
+                    yanchor='top',
+                    orientation='h'
+                ),
+            xaxis_title = 'Año',
+            margin={'t': 110}
+        )
+        fig_negocios_tasas.update_yaxes(title_text='<b>TASA DE MORTALIDAD</b>', title_font=dict(size=13))    
         with st.container(border=True):
             st.plotly_chart(fig_negocios_tasas, use_container_width=True)            
 
+        st.markdown('<small>Fuente: Censos Económicos 1989-2024<small>', unsafe_allow_html=True)
 
         # 3. Gráfico
         columnas = []
@@ -5970,8 +6071,8 @@ if fenomeno_demografico == 'Mortalidad':
         fig_negocios_tasas.update_layout(
             hovermode="x unified",
             title={
-                'text': f"Tasa de crecimiento anual de la mortalidad en la entidad de {entidad.title()}, pertenecientes al sector {sector.title()}, con {personal_seleccionado.lower()}",
-                'font': {'size': 14},
+                'text': f"Tasa de crecimiento anual de la mortalidad que murieron {titulo_entidad} antes de llegar al año t,<br>{titulo_sector} {titulo_tamano}",
+                'font': {'size': 15},
                 'automargin': False
             },
             legend=dict(
